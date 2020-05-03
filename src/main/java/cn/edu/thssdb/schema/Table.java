@@ -211,6 +211,7 @@ public class Table implements Iterable<Row> {
                     } catch (java.io.IOException e) {
                         throw new IOException();
                     }
+                    page.dirty = false;
                 }
             }
         } finally {
