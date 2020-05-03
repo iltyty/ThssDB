@@ -31,6 +31,7 @@ public class Table implements Iterable<Row> {
         this.tableName = tableName;
         this.columns = new ArrayList<>(Arrays.asList(columns));
         this.index = new BPlusTree<>();
+        this.pages = new HashMap<>();
 
         for (int i = 0; i < columns.length; i++) {
             if (this.columns.get(i).getPrimary() == 1) {
@@ -104,15 +105,20 @@ public class Table implements Iterable<Row> {
             }
         }
         assert primaryEntry != null;
-        Row row = new Row(entries, currentPage);
-        Page page = pages.get(currentPage);
-        assert page != null;
-        page.insert(primaryEntry, row.toString().length());
-        page.dirty = true;
-        if (page.size > Global.PAGE_SIZE) {
-            getNewPage();
+        try {
+            lock.writeLock().lock();
+            Row row = new Row(entries, currentPage);
+            Page page = pages.get(currentPage);
+            assert page != null;
+            page.insert(primaryEntry, row.toString().length());
+            page.dirty = true;
+            if (page.size > Global.PAGE_SIZE) {
+                getNewPage();
+            }
+            index.put(primaryEntry, row);
+        } finally {
+            lock.writeLock().unlock();
         }
-        index.put(primaryEntry, row);
     }
 
     public void delete() {
@@ -124,14 +130,19 @@ public class Table implements Iterable<Row> {
     }
 
     public void commit() {
-        for (Page page : pages.values()) {
-            if (page.dirty) {
-                try {
-                    serialize(page);
-                } catch (java.io.IOException e) {
-                    throw new IOException();
+        try {
+            lock.writeLock().lock();
+            for (Page page : pages.values()) {
+                if (page.dirty) {
+                    try {
+                        serialize(page);
+                    } catch (java.io.IOException e) {
+                        throw new IOException();
+                    }
                 }
             }
+        } finally {
+            lock.writeLock().unlock();
         }
     }
 
