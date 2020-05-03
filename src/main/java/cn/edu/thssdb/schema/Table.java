@@ -7,13 +7,16 @@ import cn.edu.thssdb.index.BPlusTreeIterator;
 import cn.edu.thssdb.type.ColumnType;
 import cn.edu.thssdb.utils.Global;
 import javafx.util.Pair;
+import sun.awt.SunHints;
 
 import java.io.*;
+import java.lang.reflect.Array;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
+import java.util.function.Predicate;
 
 public class Table implements Iterable<Row> {
     ReentrantReadWriteLock lock;
@@ -121,12 +124,81 @@ public class Table implements Iterable<Row> {
         }
     }
 
-    public void delete() {
+    public int delete(Predicate<Row> predicate) {
+        // delete rows that matches a predicate?
+        // For now, I will just use a `Predicate<Row>`
+        try {
+            lock.writeLock().lock();
+            int deleteCount = 0;
+            for (Row row : this) {
+                if (predicate.test(row)) {
+                    deleteCount++;
+                    Entry primaryKey = row.getEntries().get(primaryIndex);
+                    index.remove(primaryKey);
+                    Page page = pages.get(row.getPage());
+                    page.delete(primaryKey, row.toString().length());
+                    page.dirty = true;
+                }
+            }
 
+            return deleteCount;
+        } finally {
+            lock.writeLock().unlock();
+        }
     }
 
-    public void update() {
-        // TODO
+    public int update(String[] columnNames, String[] values, Predicate<Row> predicate) {
+        // same as above
+        if (columnNames.length != columns.size() || values.length != columnNames.length) {
+            throw new ValueException("Count of values does not match count of columns");
+        }
+        int[] indexes = new int[values.length];
+        for (int i = 0; i < columnNames.length; i++) {
+            int j = 0;
+            for (; j < columns.size(); j++) {
+                if (columns.get(j).getName().equals(columnNames[i])) {
+                    indexes[i] = j;
+                    break;
+                }
+            }
+            if (j == columns.size()) {
+                throw new ValueException("Column not found");
+            }
+        }
+
+        try {
+            lock.writeLock().lock();
+            int updateCount = 0;
+            for (Row row : this) {
+                if (predicate.test(row)) {
+                    updateCount++;
+                    Page page = pages.get(row.getPage());
+                    Entry oldEntry = row.getEntries().get(primaryIndex);
+                    page.delete(oldEntry, row.toString().length());
+                    page.dirty = true;
+
+                    boolean primaryChanged = false;
+                    Entry newEntry = null;
+                    for (int i = 0; i < values.length; i++) {
+                        Entry entry = getValue(values[i], columns.get(indexes[i]).getType());
+                        row.entries.set(indexes[i], entry);
+                        if (indexes[i] == primaryIndex) {
+                            newEntry = entry;
+                        }
+                    }
+
+                    page.insert(newEntry, row.toString().length());
+                    if (newEntry != null) {
+                        index.remove(oldEntry);
+                        index.put(newEntry, row);
+                    }
+                }
+            }
+
+            return updateCount;
+        } finally {
+            lock.writeLock().unlock();
+        }
     }
 
     public void commit() {

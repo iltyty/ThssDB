@@ -21,6 +21,10 @@ public class Column implements Comparable<Column> {
         return primary;
     }
 
+    public String getName() {
+        return name;
+    }
+
     public ColumnType getType() {
         return type;
     }
