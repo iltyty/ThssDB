@@ -21,6 +21,10 @@ public class Column implements Comparable<Column> {
         return primary;
     }
 
+    public ColumnType getType() {
+        return type;
+    }
+
     @Override
     public int compareTo(Column e) {
         return name.compareTo(e.name);
