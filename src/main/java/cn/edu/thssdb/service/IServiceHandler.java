@@ -27,13 +27,24 @@ public class IServiceHandler implements IService.Iface {
     @Override
     public ConnectResp connect(ConnectReq req) throws TException {
         // TODO
+        ConnectResp resp = new ConnectResp();
+        if (req.username.equals("ThssDB") && req.password.equals("")) {
+            resp.setSessionId(req.hashCode());
+            resp.setStatus(new Status(Global.SUCCESS_CODE));
+            return resp;
+        } else {
+            resp.setSessionId(0);
+            resp.setStatus(new Status(Global.FAILURE_CODE);
+            return resp;
+        }
         return null;
     }
 
     @Override
     public DisconnetResp disconnect(DisconnetResp req) throws TException {
-        // TODO
-        return null;
+        DisconnetResp resp = new DisconnetResp();
+        resp.setStatus(new Status(Global.SUCCESS_CODE));
+        return resp;
     }
 
     @Override
