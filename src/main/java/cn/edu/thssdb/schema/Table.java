@@ -7,15 +7,13 @@ import cn.edu.thssdb.index.BPlusTreeIterator;
 import cn.edu.thssdb.type.ColumnType;
 import cn.edu.thssdb.utils.Global;
 import javafx.util.Pair;
-import jdk.nashorn.internal.runtime.regexp.joni.constants.EncloseType;
 
 import java.io.*;
-import java.lang.reflect.Array;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.HashMap;
 import java.util.Iterator;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
-import java.util.function.Predicate;
 
 public class Table implements Iterable<Row> {
     ReentrantReadWriteLock lock;
@@ -24,6 +22,8 @@ public class Table implements Iterable<Row> {
     public ArrayList<Column> columns;
     public BPlusTree<Entry, Row> index;
     private int primaryIndex;
+    private HashMap<Integer, Page> pages;
+    private int currentPage;
 
     public Table(String databaseName, String tableName, Column[] columns) {
         this.lock = new ReentrantReadWriteLock();
@@ -38,6 +38,12 @@ public class Table implements Iterable<Row> {
                 primaryIndex = i;
             }
         }
+
+        currentPage = -1;
+        recover();
+        if (currentPage == -1) {
+            getNewPage();
+        }
     }
 
     private void recover() {
@@ -51,9 +57,18 @@ public class Table implements Iterable<Row> {
         }
         for (File file : files) {
             String[] filename = file.getName().split(".");
-            if (!filename[0].equals(this.tableName) || !filename[1].equals("data")) {
+            if (filename.length != 3 || !filename[0].equals(this.tableName) || !filename[2].equals("dat")) {
                 continue;
             }
+            int id;
+            try {
+                id = Integer.parseInt(filename[1]);
+            } catch (Exception e) {
+                continue;
+            }
+            currentPage = id;
+
+            Page page = new Page(databaseName, tableName, id);
             ArrayList<Row> rows;
             try {
                 rows = deserialize(file);
@@ -65,10 +80,13 @@ public class Table implements Iterable<Row> {
                 for (int i = 0; i < entries.size(); i++) {
                     if (i == primaryIndex) {
                         index.put(entries.get(i), row);
+                        page.entries.add(entries.get(i));
                         break;
                     }
                 }
             }
+
+            pages.put(id, page);
         }
     }
 
@@ -86,23 +104,44 @@ public class Table implements Iterable<Row> {
             }
         }
         assert primaryEntry != null;
-        Row row = new Row(entries);
+        Row row = new Row(entries, currentPage);
+        Page page = pages.get(currentPage);
+        assert page != null;
+        page.insert(primaryEntry, row.toString().length());
+        page.dirty = true;
+        if (page.size > Global.PAGE_SIZE) {
+            getNewPage();
+        }
         index.put(primaryEntry, row);
     }
 
     public void delete() {
-        // TODO
+
     }
 
     public void update() {
         // TODO
     }
 
-    private void serialize(File file) throws java.io.IOException {
+    public void commit() {
+        for (Page page : pages.values()) {
+            if (page.dirty) {
+                try {
+                    serialize(page);
+                } catch (java.io.IOException e) {
+                    throw new IOException();
+                }
+            }
+        }
+    }
+
+    private void serialize(Page page) throws java.io.IOException {
+        File file = new File(page.path);
         ObjectOutputStream stream = new ObjectOutputStream(new FileOutputStream(file));
         ArrayList<Row> rows = new ArrayList<>();
-        for (Pair<Entry, Row> pair : index) {
-            rows.add(pair.getValue());
+        for (Entry entry : page.entries) {
+            Row row = index.get(entry);
+            rows.add(row);
         }
         stream.writeObject(rows);
         stream.close();
@@ -113,6 +152,12 @@ public class Table implements Iterable<Row> {
         ArrayList<Row> rows = (ArrayList<Row>) stream.readObject();
         stream.close();
         return rows;
+    }
+
+    private void getNewPage() {
+        currentPage++;
+        Page page = new Page(databaseName, tableName, currentPage);
+        pages.put(currentPage, page);
     }
 
     private Entry getValue(String value, ColumnType type) {

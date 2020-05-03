@@ -9,7 +9,7 @@ public class Global {
   public static String DEFAULT_SERVER_HOST = "127.0.0.1";
   public static int DEFAULT_SERVER_PORT = 6667;
 
-  public static String DATA_DIR = "./data/";
+  public static int PAGE_SIZE = 1 << 12;
 
   public static String CLI_PREFIX = "ThssDB>";
   public static final String SHOW_TIME = "show time;";
