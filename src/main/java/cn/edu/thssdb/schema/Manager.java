@@ -23,6 +23,7 @@ public class Manager {
     public Manager() {
         this.databases = new HashMap<>();
         recoverDatabase();
+        createDatabaseIfNotExists();
     }
 
     private void recoverDatabase() {
