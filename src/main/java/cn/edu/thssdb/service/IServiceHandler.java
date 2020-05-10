@@ -34,10 +34,9 @@ public class IServiceHandler implements IService.Iface {
             return resp;
         } else {
             resp.setSessionId(0);
-            resp.setStatus(new Status(Global.FAILURE_CODE);
+            resp.setStatus(new Status(Global.FAILURE_CODE));
             return resp;
         }
-        return null;
     }
 
     @Override

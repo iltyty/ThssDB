@@ -55,7 +55,7 @@ public class Table implements Iterable<Row> {
         File dbDir = new File(dbPath);
         File[] files = dbDir.listFiles();
         if (files == null) {
-            throw new IOException();
+            throw new IOException("Database path does not exist");
         } else if (files.length == 0) {
             return;
         }
@@ -77,7 +77,7 @@ public class Table implements Iterable<Row> {
             try {
                 rows = deserialize(file);
             } catch (Exception e) {
-                throw new IOException();
+                throw new IOException("Error deserialize into file");
             }
             for (Row row : rows) {
                 ArrayList<Entry> entries = row.getEntries();
@@ -147,6 +147,13 @@ public class Table implements Iterable<Row> {
         }
     }
 
+    public void deleteAll() {
+        for (int i = 0; i <= currentPage; i++) {
+            File file = new File("./" + databaseName + "/" + tableName + "." + i + ".dat");
+            file.delete();
+        }
+    }
+
     public int update(String[] columnNames, String[] values, Predicate<Row> predicate) {
         // same as above
         if (columnNames.length != columns.size() || values.length != columnNames.length) {
@@ -209,7 +216,7 @@ public class Table implements Iterable<Row> {
                     try {
                         serialize(page);
                     } catch (java.io.IOException e) {
-                        throw new IOException();
+                        throw new IOException("Cannot serialize into file");
                     }
                     page.dirty = false;
                 }
