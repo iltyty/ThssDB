@@ -21,6 +21,8 @@ public class Column implements Comparable<Column> {
         return primary;
     }
 
+    public void setPrimary(int primary) { this.primary = primary; }
+
     public String getName() {
         return name;
     }

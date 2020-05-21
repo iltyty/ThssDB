@@ -1,8 +1,10 @@
 package cn.edu.thssdb.server;
 
+import cn.edu.thssdb.parser.SQLEvaluator;
 import cn.edu.thssdb.rpc.thrift.IService;
 import cn.edu.thssdb.schema.Manager;
 import cn.edu.thssdb.service.IServiceHandler;
+import cn.edu.thssdb.utils.Context;
 import cn.edu.thssdb.utils.Global;
 import org.apache.thrift.server.TServer;
 import org.apache.thrift.server.TSimpleServer;
@@ -21,6 +23,14 @@ public class ThssDB {
     private static TServer server;
 
     private Manager manager;
+    private SQLEvaluator evaluator;
+
+    public ThssDB() {
+        manager = Manager.getInstance();
+        evaluator = new SQLEvaluator(manager);
+    }
+
+    public SQLEvaluator getEvaluator() { return evaluator; }
 
     public static ThssDB getInstance() {
         return ThssDBHolder.INSTANCE;

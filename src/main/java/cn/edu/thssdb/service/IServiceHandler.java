@@ -1,5 +1,6 @@
 package cn.edu.thssdb.service;
 
+import cn.edu.thssdb.parser.SQLEvaluator;
 import cn.edu.thssdb.rpc.thrift.ConnectReq;
 import cn.edu.thssdb.rpc.thrift.ConnectResp;
 import cn.edu.thssdb.rpc.thrift.DisconnetResp;
@@ -9,6 +10,7 @@ import cn.edu.thssdb.rpc.thrift.GetTimeReq;
 import cn.edu.thssdb.rpc.thrift.GetTimeResp;
 import cn.edu.thssdb.rpc.thrift.IService;
 import cn.edu.thssdb.rpc.thrift.Status;
+import cn.edu.thssdb.server.ThssDB;
 import cn.edu.thssdb.utils.Global;
 import org.apache.thrift.TException;
 
@@ -48,7 +50,10 @@ public class IServiceHandler implements IService.Iface {
 
     @Override
     public ExecuteStatementResp executeStatement(ExecuteStatementReq req) throws TException {
-        // TODO
-        return null;
+        ExecuteStatementResp resp = new ExecuteStatementResp();
+        resp.setIsAbort(true);
+        resp.setHasResult(true);
+        resp.setStatus(new Status(Global.SUCCESS_CODE));
+        return resp;
     }
 }

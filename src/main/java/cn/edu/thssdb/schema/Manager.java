@@ -5,6 +5,7 @@ import cn.edu.thssdb.exception.IOException;
 import cn.edu.thssdb.exception.KeyNotExistException;
 import cn.edu.thssdb.server.ThssDB;
 import cn.edu.thssdb.utils.Context;
+import cn.edu.thssdb.utils.Global;
 
 import java.io.BufferedReader;
 import java.io.File;
@@ -14,17 +15,21 @@ import java.util.concurrent.locks.ReentrantReadWriteLock;
 
 public class Manager {
     private HashMap<String, Database> databases;
+    private Context context;
     private static ReentrantReadWriteLock lock = new ReentrantReadWriteLock();
 
     public static Manager getInstance() {
         return Manager.ManagerHolder.INSTANCE;
     }
 
-    public Manager() {
+    public Manager(Context cxt) {
+        this.context = cxt;
         this.databases = new HashMap<>();
         recoverDatabase();
         createDatabaseIfNotExists();
     }
+
+    public Context getContext() { return context; }
 
     private void recoverDatabase() {
         File file = new File("./db.meta");
@@ -51,16 +56,16 @@ public class Manager {
     private void createDatabaseIfNotExists() {
         try {
             lock.writeLock().lock();
-            if (databases.containsKey("admin")) {
+            if (databases.containsKey(Global.ADMIN_DB_NAME)) {
                 return;
             }
-            createDatabase("admin");
+            createDatabase(Global.ADMIN_DB_NAME);
         } finally {
             lock.writeLock().unlock();
         }
     }
 
-    private void deleteDatabase(String name) {
+    public void deleteDatabase(String name) {
         try {
             lock.writeLock().lock();
             Database db = databases.get(name);
@@ -86,7 +91,7 @@ public class Manager {
         }
     }
 
-    private void createDatabase(String name) {
+    public void createDatabase(String name) {
         try {
             lock.writeLock().lock();
             if (databases.containsKey(name)) {
@@ -106,7 +111,7 @@ public class Manager {
     }
 
     private static class ManagerHolder {
-        private static final Manager INSTANCE = new Manager();
+        private static final Manager INSTANCE = new Manager(new Context(Global.ADMIN_DB_NAME));
 
         private ManagerHolder() {
 

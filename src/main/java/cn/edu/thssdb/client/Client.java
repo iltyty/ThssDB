@@ -1,7 +1,8 @@
 package cn.edu.thssdb.client;
 
-import cn.edu.thssdb.rpc.thrift.GetTimeReq;
-import cn.edu.thssdb.rpc.thrift.IService;
+import cn.edu.thssdb.rpc.thrift.*;
+import cn.edu.thssdb.server.ThssDB;
+import cn.edu.thssdb.utils.Context;
 import cn.edu.thssdb.utils.Global;
 import org.apache.commons.cli.CommandLine;
 import org.apache.commons.cli.CommandLineParser;
@@ -41,6 +42,7 @@ public class Client {
     private static TProtocol protocol;
     private static IService.Client client;
     private static CommandLine commandLine;
+    private static long sessionId;
 
     public static void main(String[] args) {
         commandLine = parseCmd(args);
@@ -68,8 +70,11 @@ public class Client {
                     case Global.QUIT:
                         open = false;
                         break;
+                    case Global.CONNECT:
+                        connect();
+                        break;
                     default:
-                        println("Invalid statements!");
+                        execute(msg.trim());
                         break;
                 }
                 long endTime = System.currentTimeMillis();
@@ -89,6 +94,27 @@ public class Client {
         try {
             println(client.getTime(req).getTime());
         } catch (TException e) {
+            logger.error(e.getMessage());
+        }
+    }
+
+    private static void connect() {
+        ConnectReq req = new ConnectReq("ThssDB", "");
+        try {
+            ConnectResp resp = client.connect(req);
+            sessionId = resp.sessionId;
+        } catch (TException e) {
+            logger.error(e.getMessage());
+        }
+    }
+
+    private static void execute(String stmt) {
+        ExecuteStatementReq req = new ExecuteStatementReq(sessionId, stmt);
+        try {
+            ExecuteStatementResp resp = client.executeStatement(req);
+            String msg = ThssDB.getInstance().getEvaluator().evaluate(req.statement);
+            println(msg);
+        } catch (Exception e) {
             logger.error(e.getMessage());
         }
     }
