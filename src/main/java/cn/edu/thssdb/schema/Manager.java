@@ -79,7 +79,7 @@ public class Manager {
         }
     }
 
-    public void switchDatabase(String name, Context context) {
+    public void switchDatabase(String name) {
         try {
             lock.readLock().lock();
             if (!databases.containsKey(name)) {
@@ -108,6 +108,45 @@ public class Manager {
             lock.writeLock().unlock();
         }
 
+    }
+
+    public Database getDatabase(String name) {
+        try {
+            lock.readLock().lock();
+            if (!databases.containsKey(name)) {
+                throw new KeyNotExistException();
+            }
+            return databases.get(name);
+        } finally {
+            lock.readLock().unlock();
+        }
+    }
+
+    public void insert(String tableName, String[] values, String[] columnNames) {
+        Database database = getDatabase(context.databaseName);
+        Table table = database.getTable(tableName);
+        table.insert(values, columnNames);
+    }
+
+    public void createTable(String name, Column[] columns) {
+        Database database = getDatabase(context.databaseName);
+        database.create(name, columns);
+    }
+
+    public void deleteTable(String name, boolean optional) {
+        Database db = getDatabase(context.databaseName);
+        try {
+            db.lock.writeLock().lock();
+            if (!db.tables.containsKey(name)) {
+                if (optional) {
+                    return;
+                }
+                throw new KeyNotExistException();
+            }
+            db.drop(name);
+        } finally {
+            lock.writeLock().unlock();
+        }
     }
 
     private static class ManagerHolder {

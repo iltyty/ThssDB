@@ -1,5 +1,6 @@
 package cn.edu.thssdb.schema;
 
+import cn.edu.thssdb.exception.ColumnNotExistException;
 import cn.edu.thssdb.exception.IOException;
 import cn.edu.thssdb.exception.ValueException;
 import cn.edu.thssdb.index.BPlusTree;
@@ -94,14 +95,50 @@ public class Table implements Iterable<Row> {
         }
     }
 
-    public void insert(String[] values) {
-        if (values == null || values.length != columns.size()) {
-            throw new ValueException("Count of values does not match count of columns");
+    private boolean hasColumn(String columnName) {
+        for (Column column : columns) {
+            if (column.getName() == columnName) {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    public void insert(String[] values, String[] columnNames) {
+        if (columnNames != null) {
+            if (values == null || values.length != columns.size() || values.length != columnNames.length) {
+                throw new ValueException("Count of values does not match count of columns");
+            }
+            for (String name : columnNames) {
+                if (!hasColumn(name)) {
+                    throw new ColumnNotExistException();
+                }
+            }
         }
         Entry[] entries = new Entry[columns.size()];
         Entry primaryEntry = null;
         for (int i = 0; i < values.length; i++) {
-            Entry entry = getValue(values[i], columns.get(i).getType());
+            Entry entry = new Entry(0);
+            Column column = columns.get(i);
+            if (columnNames == null) {
+                entry = getValue(values[i], column.getType());
+            } else {
+                boolean found = false;
+                for (int j = 0; j < values.length; j++) {
+                    if (columnNames[j].equals(column.getName())) {
+                        entry = getValue(values[j], column.getType());
+                        found = true;
+                        break;
+                    }
+                }
+                if (!found && column.notNull) {
+                    throw new ValueException("No value specified for column " + column.getName());
+                }
+            }
+            if (column.getType() == ColumnType.STRING && entry.value != null && String.valueOf(entry.value).length() > column.maxLength) {
+                throw new ValueException("String of column " + column.getName() + " exceeds maxLength");
+            }
             entries[i] = entry;
             if (i == primaryIndex) {
                 primaryEntry = entry;

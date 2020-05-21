@@ -18,7 +18,7 @@ import java.util.concurrent.locks.ReentrantReadWriteLock;
 public class Database {
 
     private String name;
-    private HashMap<String, Table> tables;
+    public HashMap<String, Table> tables;
     ReentrantReadWriteLock lock;
 
     public Database(String name) {
@@ -178,6 +178,18 @@ public class Database {
 
             Table table = new Table(this.name, names[0], columns.toArray(new Column[0]));
             this.tables.put(names[0], table);
+        }
+    }
+
+    public Table getTable(String name) {
+        try {
+            lock.readLock().lock();
+            if (!tables.containsKey(name)) {
+                throw new KeyNotExistException();
+            }
+            return tables.get(name);
+        } finally {
+            lock.readLock().unlock();
         }
     }
 
