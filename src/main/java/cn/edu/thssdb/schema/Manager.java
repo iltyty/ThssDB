@@ -3,7 +3,6 @@ package cn.edu.thssdb.schema;
 import cn.edu.thssdb.exception.DuplicateDatabaseException;
 import cn.edu.thssdb.exception.IOException;
 import cn.edu.thssdb.exception.KeyNotExistException;
-import cn.edu.thssdb.server.ThssDB;
 import cn.edu.thssdb.utils.Context;
 import cn.edu.thssdb.utils.Global;
 
@@ -11,6 +10,7 @@ import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileReader;
 import java.util.HashMap;
+import java.util.StringJoiner;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 
 public class Manager {
@@ -147,6 +147,22 @@ public class Manager {
         } finally {
             lock.writeLock().unlock();
         }
+    }
+
+    public String showTables(String name) {
+        Database db = getDatabase(name);
+        StringJoiner sj = new StringJoiner(" ");
+        sj.add(String.format("Tables in %s:", name));
+
+        try {
+            db.lock.readLock().lock();
+            for (String tbName : db.tables.keySet()) {
+                sj.add(tbName);
+            }
+        } finally {
+            db.lock.readLock().unlock();
+        }
+        return sj.toString();
     }
 
     private static class ManagerHolder {

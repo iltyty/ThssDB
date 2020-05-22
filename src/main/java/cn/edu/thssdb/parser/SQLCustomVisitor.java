@@ -8,9 +8,6 @@ import cn.edu.thssdb.schema.Manager;
 import cn.edu.thssdb.type.ColumnType;
 import javafx.util.Pair;
 
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
 import java.util.StringJoiner;
 
 public class SQLCustomVisitor extends SQLBaseVisitor {
@@ -19,6 +16,10 @@ public class SQLCustomVisitor extends SQLBaseVisitor {
     public SQLCustomVisitor(Manager manager) {
         super();
         this.manager = manager;
+    }
+
+    private boolean equals(String columnName1, String columnName2) {
+        return columnName1.toLowerCase().equals(columnName2.toLowerCase());
     }
 
     @Override
@@ -47,6 +48,8 @@ public class SQLCustomVisitor extends SQLBaseVisitor {
             return visitCreate_table_stmt(ctx.create_table_stmt());
         } else if (ctx.drop_table_stmt() != null) {
             return visitDrop_table_stmt(ctx.drop_table_stmt());
+        } else if (ctx.show_table_stmt() != null) {
+            return visitShow_table_stmt(ctx.show_table_stmt());
         } else if (ctx.insert_stmt() != null) {
             return visitInsert_stmt(ctx.insert_stmt());
         } else if (ctx.select_stmt() != null) {
@@ -86,10 +89,6 @@ public class SQLCustomVisitor extends SQLBaseVisitor {
             return e.getMessage();
         }
         return String.format("Switched to database %s.", dbName);
-    }
-
-    private boolean equals(String columnName1, String columnName2) {
-        return columnName1.toLowerCase().equals(columnName2.toLowerCase());
     }
 
     @Override
@@ -139,7 +138,12 @@ public class SQLCustomVisitor extends SQLBaseVisitor {
         } catch (Exception e) {
             return e.getMessage();
         }
-        return "";
+        return String.format("Dropped table %s.", tbName);
+    }
+
+    @Override
+    public String visitShow_table_stmt(SQLParser.Show_table_stmtContext ctx) {
+        return manager.showTables(ctx.database_name().getText().toLowerCase());
     }
 
     @Override
