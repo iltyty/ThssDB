@@ -44,6 +44,8 @@ public class SQLCustomVisitor extends SQLBaseVisitor {
             return visitDrop_db_stmt(ctx.drop_db_stmt());
         } else if (ctx.use_db_stmt() != null) {
             return visitUse_db_stmt(ctx.use_db_stmt());
+        } else if (ctx.show_db_stmt() != null) {
+            return visitShow_db_stmt(ctx.show_db_stmt());
         } else if (ctx.create_table_stmt() != null) {
             return visitCreate_table_stmt(ctx.create_table_stmt());
         } else if (ctx.drop_table_stmt() != null) {
@@ -89,6 +91,11 @@ public class SQLCustomVisitor extends SQLBaseVisitor {
             return e.getMessage();
         }
         return String.format("Switched to database %s.", dbName);
+    }
+
+    @Override
+    public String visitShow_db_stmt(SQLParser.Show_db_stmtContext ctx) {
+        return manager.showDatabases();
     }
 
     @Override

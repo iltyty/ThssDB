@@ -122,6 +122,16 @@ public class Manager {
         }
     }
 
+    public String showDatabases() {
+        StringJoiner sj = new StringJoiner(" ");
+        sj.add("All databases:");
+
+        for (String dbName : databases.keySet()) {
+            sj.add(dbName);
+        }
+        return sj.toString();
+    }
+
     public void insert(String tableName, String[] values, String[] columnNames) {
         Database database = getDatabase(context.databaseName);
         Table table = database.getTable(tableName);
