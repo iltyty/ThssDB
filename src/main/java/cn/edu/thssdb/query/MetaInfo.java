@@ -25,7 +25,7 @@ class MetaInfo {
         }
 
         if (res == -1) {
-            throw new ColumnNotExistException();
+            throw new ColumnNotExistException(name);
         }
         return 0;
     }

@@ -1,5 +1,6 @@
 package cn.edu.thssdb.parser;
 
+import cn.edu.thssdb.exception.ColumnNotExistException;
 import cn.edu.thssdb.exception.ValueException;
 import cn.edu.thssdb.query.QueryTable;
 import cn.edu.thssdb.schema.Column;
@@ -8,6 +9,8 @@ import cn.edu.thssdb.type.ColumnType;
 import javafx.util.Pair;
 
 import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
 import java.util.StringJoiner;
 
 public class SQLCustomVisitor extends SQLBaseVisitor {
@@ -85,14 +88,41 @@ public class SQLCustomVisitor extends SQLBaseVisitor {
         return String.format("Switched to database %s.", dbName);
     }
 
+    private boolean equals(String columnName1, String columnName2) {
+        return columnName1.toLowerCase().equals(columnName2.toLowerCase());
+    }
+
     @Override
     public String visitCreate_table_stmt(SQLParser.Create_table_stmtContext ctx) {
         String tbName = ctx.table_name().getText();
         int n = ctx.column_def().size();
+
+        // resolve columns definition
         Column[] columns = new Column[n];
         for (int i = 0; i < n; i++) {
             columns[i] = visitColumn_def(ctx.column_def().get(i));
         }
+
+        // resolve table constraints
+        if (ctx.table_constraint() != null) {
+            String[] primaryNames = visitTable_constraint(ctx.table_constraint());
+            int length = primaryNames.length;
+            if (length >= 1) {
+                for (String name : primaryNames) {
+                    boolean exist = false;
+                    for (Column column : columns) {
+                        if (equals(column.getName(), name)) {
+                            exist = true;
+                            column.setPrimary(length == 1 ? 1 : 2);
+                        }
+                    }
+                    if (!exist) {
+                        throw new ColumnNotExistException(name);
+                    }
+                }
+            }
+        }
+
         try {
             manager.createTable(tbName, columns);
         } catch (Exception e) {
@@ -203,6 +233,17 @@ public class SQLCustomVisitor extends SQLBaseVisitor {
             return "NONNULL";
         }
         return null;
+    }
+
+    @Override
+    public String[] visitTable_constraint(SQLParser.Table_constraintContext ctx) {
+        int nColumn = ctx.column_name().size();
+        String[] names = new String[nColumn];
+
+        for (int i = 0; i < nColumn; i++) {
+            names[i] = ctx.column_name(i).getText().toLowerCase();
+        }
+        return names;
     }
 
     @Override

@@ -112,7 +112,7 @@ public class Table implements Iterable<Row> {
             }
             for (String name : columnNames) {
                 if (!hasColumn(name)) {
-                    throw new ColumnNotExistException();
+                    throw new ColumnNotExistException(name);
                 }
             }
         }

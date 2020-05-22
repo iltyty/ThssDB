@@ -21,47 +21,47 @@
     - 支持Int, Long, Float, Double, String五种数据类型
     - 实现了文件的页式存储
 
-	2. 实现方式
+2. 实现方式
 
-    存储模块的实现主要与Table类与Page类紧密相关。关键的类方法与其功能说明列举如下：
+   存储模块的实现主要与Table类与Page类紧密相关。关键的类方法与其功能说明列举如下：
 
-    - Table
+   - Table
 
-      ```java
-      // 将磁盘文件中恢复数据库信息
-      private void recover();
-      
-      // 向表中插入新的行，插入不合法时抛出ValueException
-      public void insert(String[] values);
-      
-      // 删除满足条件predicate的行
-      public int delete(Predicate<Row> predicate);
-      
-      // 删除此表中的所有行
-      public void deleteAll();
-      
-      // 尝试在表中查找并更新对应的行，当指定的行不存在时抛出ValueException
-      public int update(String[] columnNames, String[] values, Predicate<Row> predicates);
-      
-      // 当数据库操作完成时提交事务，并调用serialize方法进行数据的持久化存储
-      public void commit();
-      
-      // 序列化表中数据并存储在指定磁盘页面中
-      private void serialize(Page page);
-      
-      // 反序列化磁盘数据并以行列表的形式返回表中数据
-      private ArrayList<Row> deserilize(File file);
-      ```
+     ```java
+     // 将磁盘文件中恢复数据库信息
+     private void recover();
+     
+     // 向表中插入新的行，插入不合法时抛出ValueException
+     public void insert(String[] values);
+     
+     // 删除满足条件predicate的行
+     public int delete(Predicate<Row> predicate);
+     
+     // 删除此表中的所有行
+     public void deleteAll();
+     
+     // 尝试在表中查找并更新对应的行，当指定的行不存在时抛出ValueException
+     public int update(String[] columnNames, String[] values, Predicate<Row> predicates);
+     
+     // 当数据库操作完成时提交事务，并调用serialize方法进行数据的持久化存储
+     public void commit();
+     
+     // 序列化表中数据并存储在指定磁盘页面中
+     private void serialize(Page page);
+     
+     // 反序列化磁盘数据并以行列表的形式返回表中数据
+     private ArrayList<Row> deserilize(File file);
+     ```
 
-    - Page
+   - Page
 
-      ```java
-      // 向当前页面插入一个大小为size的词条entry，并更新此页面已存储数据的大小
-      public void insert(Entry entry, int size);
-      
-      // 从当前页面删除一个大小为size的词条entry，并更新此页面已存储数据的大小
-      public void delete(Entry entry, int size);
-      ```
+     ```java
+     // 向当前页面插入一个大小为size的词条entry，并更新此页面已存储数据的大小
+     public void insert(Entry entry, int size);
+     
+     // 从当前页面删除一个大小为size的词条entry，并更新此页面已存储数据的大小
+     public void delete(Entry entry, int size);
+     ```
 
 ##### 2. 元数据管理模块
 
@@ -116,7 +116,17 @@
 
 ##### 3. 查询模块
 
-​	待实现。
+ 1. 实现功能
+
+    - 表的创建，包括关键字not null和primary key的实现
+    - 表的删除，删除指定名称的表，若表不存在则报错
+    - 表的查询，从指定表中查询符合条件的行，支持where, join, on关键字，支持在where子句中进行比较
+    - 表的更新，更新指定表中符合条件的行，支持where关键字及在其中进行比较
+    - 查询所有已创建的表
+
+	2. 实现方式
+
+    查询模块主要与SQLCustomVisitor类有关，这个类接收SQLParser返回的对SQL语句的解析结果，并根据不同的语句类型进行不同的操作。由于此类中方法过多，因此未做列举，具体可参见parser包下的SQLCustomVisitor类，各方法名与查询语句名称基本对应。
 
 ##### 4. 事务与恢复模块
 

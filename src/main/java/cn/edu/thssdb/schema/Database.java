@@ -53,7 +53,9 @@ public class Database {
             if (tables.containsKey(name)) {
                 throw new DuplicateTableException(name);
             }
-            boolean primary = false;
+
+            // whether there is already a single primary key
+            int primaryExisted = 0;
             HashSet<String> columnNames = new HashSet<>();
             // check column validity
             for (Column column : columns) {
@@ -63,22 +65,28 @@ public class Database {
                 }
                 if (columnNames.contains(columnName)) {
                     throw new DuplicateColumnException(columnName);
-                } else {
-                    columnNames.add(columnName);
-                    if (column.getPrimary() == 1) {
-                        if (primary) {
-                            throw new DuplicatePrimaryException(columnName);
-                        } else {
-                            primary = true;
-                        }
+                }
+
+                columnNames.add(columnName);
+                if (column.getPrimary() == 1) {
+                    if (primaryExisted != 0) {
+                        throw new DuplicatePrimaryException(columnName);
                     }
+                    primaryExisted = 1;
+                } else if (column.getPrimary() == 2) {
+                    if (primaryExisted == 1) {
+                        throw  new DuplicateDatabaseException(columnName);
+                    }
+                    primaryExisted = 2;
                 }
             }
 
             Table table;
-            if (primary) {
+            if (primaryExisted == 1) {
+                // single primary key
                 table = new Table(this.name, name, columns);
             } else {
+                // composite primary key
                 Column primaryColumn = new Column("uuid", ColumnType.LONG, 1, true, -1);
                 Column[] newColumns = new Column[columns.length + 1];
                 System.arraycopy(columns, 0, newColumns, 0, columns.length);
