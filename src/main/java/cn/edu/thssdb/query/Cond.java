@@ -6,6 +6,7 @@ import cn.edu.thssdb.schema.Row;
 import cn.edu.thssdb.schema.Table;
 
 import java.lang.reflect.Method;
+import java.util.List;
 import java.util.function.Function;
 import java.util.function.Predicate;
 
@@ -60,8 +61,8 @@ public class Cond {
         return true;
     }
 
-    public Predicate<Row> toPredicate(Table table) {
-        Function<Row, Comparable> e1 = left.extractor(table), e2 = right.extractor(table);
+    public Predicate<Row> toPredicate(List<MetaInfo> metaInfos) {
+        Function<Row, Comparable> e1 = left.extractor(metaInfos), e2 = right.extractor(metaInfos);
         // runtime reflection does not quite work for lambdas
         switch (op) {
             case EQ:

@@ -8,7 +8,10 @@ import cn.edu.thssdb.schema.Manager;
 import cn.edu.thssdb.type.ColumnType;
 import javafx.util.Pair;
 
+import java.util.ArrayList;
+import java.util.List;
 import java.util.StringJoiner;
+import java.util.stream.Collectors;
 
 public class SQLCustomVisitor extends SQLBaseVisitor {
     private Manager manager;
@@ -275,9 +278,14 @@ public class SQLCustomVisitor extends SQLBaseVisitor {
     public QueryTable visitTable_query(SQLParser.Table_queryContext ctx) {
         if (ctx.K_JOIN().size() == 0) {
             return manager.getSingleTable(ctx.table_name(0).getText().toLowerCase());
-        } else {
-            return null;
         }
+        Where join = visitMultiple_condition(ctx.multiple_condition());
+        List<String> tableNames = ctx
+                .table_name()
+                .stream()
+                .map(sCtx -> sCtx.getText().toLowerCase())
+                .collect(Collectors.toList());
+        return manager.getJointTable(tableNames, join);
     }
 
     @Override

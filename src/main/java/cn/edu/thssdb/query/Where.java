@@ -3,6 +3,7 @@ package cn.edu.thssdb.query;
 import cn.edu.thssdb.schema.Row;
 import cn.edu.thssdb.schema.Table;
 
+import java.util.List;
 import java.util.function.Predicate;
 
 public class Where {
@@ -30,15 +31,15 @@ public class Where {
         return right == null;
     }
 
-    public Predicate<Row> toPredicate(Table table) {
+    public Predicate<Row> toPredicate(List<MetaInfo> metaInfos) {
         if (isTerminal()) {
-            return cond.toPredicate(table);
+            return cond.toPredicate(metaInfos);
         } else {
             switch (op) {
                 case OR:
-                    return left.toPredicate(table).or(right.toPredicate(table));
+                    return left.toPredicate(metaInfos).or(right.toPredicate(metaInfos));
                 case AND:
-                    return left.toPredicate(table).and(right.toPredicate(table));
+                    return left.toPredicate(metaInfos).and(right.toPredicate(metaInfos));
                 default:
                     return null;
             }

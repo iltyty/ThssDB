@@ -15,6 +15,7 @@ public class SingleTable extends QueryTable implements Iterator<Row> {
         this.table = table;
         iterator = table.iterator();
         columns = table.columns;
+        putRowsToBuffer();
     }
 
     @Override
@@ -22,15 +23,6 @@ public class SingleTable extends QueryTable implements Iterator<Row> {
         buffer.clear();
         iterator = table.iterator();
         putRowsToBuffer();
-    }
-
-    @Override
-    public void setWhere(Where where) {
-        if (where == null) {
-            predicate = null;
-        } else {
-            predicate = where.toPredicate(table);
-        }
     }
 
     @Override
@@ -42,20 +34,8 @@ public class SingleTable extends QueryTable implements Iterator<Row> {
 
     @Override
     public void putRowsToBuffer() {
-        if (predicate == null) {
-            // no where clause
-            if (iterator.hasNext()) {
-                buffer.add(iterator.next());
-            }
-        } else {
-            while (iterator.hasNext()) {
-                Row row = iterator.next();
-                if (!predicate.test(row)) {
-                    continue;
-                }
-                buffer.add(row);
-                break;
-            }
+        if (iterator.hasNext()) {
+            buffer.add(iterator.next());
         }
     }
 

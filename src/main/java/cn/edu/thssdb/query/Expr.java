@@ -1,11 +1,13 @@
 package cn.edu.thssdb.query;
 
 import cn.edu.thssdb.exception.ColumnNotExistException;
+import cn.edu.thssdb.exception.DuplicateColumnException;
 import cn.edu.thssdb.exception.ExprException;
 import cn.edu.thssdb.schema.Row;
 import cn.edu.thssdb.schema.Table;
 
 import java.lang.reflect.Method;
+import java.util.List;
 import java.util.function.Function;
 
 public class Expr {
@@ -87,20 +89,52 @@ public class Expr {
         }
     }
 
-    public Function<Row, Comparable> extractor(Table table) {
+    public Function<Row, Comparable> extractor(List<MetaInfo> metaInfos) {
         if (isTerminal()) {
             if (isColumnName()) {
                 String name = (String) value.value;
-                int index = table.findColumnIndex(name);
-                if (index == -1) {
+                if (name.contains(".")) {
+                    String[] names = name.split("\\.");
+                    if (names.length != 2) {
+                        throw new ColumnNotExistException(name);
+                    }
+                    int offset = 0;
+                    for (MetaInfo metaInfo : metaInfos) {
+                        if (metaInfo.tableName.equals(names[0])) {
+                            int index = metaInfo.columnFind(names[1]);
+                            if (index != -1) {
+                                int finalOffset = offset;
+                                return r -> r.valueOf(index + finalOffset);
+                            }
+                        }
+                        offset += metaInfo.columns.size();
+                    }
                     throw new ColumnNotExistException(name);
+                } else {
+                    int matches = 0, offset = 0;
+                    Function<Row, Comparable> res = null;
+                    for (MetaInfo metaInfo : metaInfos) {
+                        int index = metaInfo.columnFind(name);
+                        if (index != -1) {
+                            matches++;
+                            if (matches > 1) {
+                                throw new DuplicateColumnException(name);
+                            }
+                            int finalOffset = offset;
+                            res = r -> r.valueOf(index + finalOffset);
+                        }
+                        offset += metaInfo.columns.size();
+                    }
+                    if (matches == 0) {
+                        throw new ColumnNotExistException(name);
+                    }
+                    return res;
                 }
-                return r -> r.valueOf(index);
             } else {
                 return r -> value.value;
             }
         } else {
-            Function<Row, Comparable> e1 = left.extractor(table), e2 = right.extractor(table);
+            Function<Row, Comparable> e1 = left.extractor(metaInfos), e2 = right.extractor(metaInfos);
             switch (op) {
                 case ADD:
                     return r -> {

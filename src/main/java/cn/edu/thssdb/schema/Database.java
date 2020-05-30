@@ -126,19 +126,16 @@ public class Database {
     public QueryResult select(QueryTable[] queryTables, String[] columnNames, Where where, boolean distinct) {
         try {
             lock.readLock().lock();
-            for (QueryTable queryTable : queryTables) {
-                queryTable.setWhere(where);
-            }
             logger.info("Getting full query result");
-            return getFullQueryResult(queryTables, columnNames, distinct);
+            return getFullQueryResult(queryTables, columnNames, where, distinct);
         } finally {
             lock.readLock().unlock();
         }
     }
 
-    private QueryResult getFullQueryResult(QueryTable[] queryTables, String[] columnNames, boolean distinct) {
+    private QueryResult getFullQueryResult(QueryTable[] queryTables, String[] columnNames, Where where, boolean distinct) {
         // cartesian product
-        QueryResult queryResult = new QueryResult(queryTables, columnNames, distinct);
+        QueryResult queryResult = new QueryResult(queryTables, columnNames, where, distinct);
         LinkedList<Row> rows = new LinkedList<>();
         while (true) {
             if (rows.isEmpty()) {

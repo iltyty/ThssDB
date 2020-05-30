@@ -10,13 +10,10 @@ public abstract class QueryTable implements Iterator<Row> {
     protected Queue<Row> buffer;
 
     public ArrayList<Column> columns;
-    public Predicate<Row> predicate;
 
     public abstract void putRowsToBuffer();
 
     public abstract void clear();
-
-    public abstract void setWhere(Where where);
 
     public abstract ArrayList<MetaInfo> genMetaInfo();
 
@@ -26,22 +23,16 @@ public abstract class QueryTable implements Iterator<Row> {
 
     @Override
     public boolean hasNext() {
-        putRowsToBuffer();
         return !buffer.isEmpty();
     }
 
     @Override
     public Row next() {
         if (buffer.isEmpty()) {
-            putRowsToBuffer();
-        }
-        if (buffer.isEmpty()) {
             return null;
         }
         Row row = buffer.poll();
-        if (buffer.isEmpty()) {
-            putRowsToBuffer();
-        }
+        putRowsToBuffer();
         return row;
     }
 }

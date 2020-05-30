@@ -4,10 +4,7 @@ import cn.edu.thssdb.exception.DuplicateDatabaseException;
 import cn.edu.thssdb.exception.IOException;
 import cn.edu.thssdb.exception.KeyNotExistException;
 import cn.edu.thssdb.exception.RelationNotExist;
-import cn.edu.thssdb.query.QueryResult;
-import cn.edu.thssdb.query.QueryTable;
-import cn.edu.thssdb.query.SingleTable;
-import cn.edu.thssdb.query.Where;
+import cn.edu.thssdb.query.*;
 import cn.edu.thssdb.server.ThssDB;
 import cn.edu.thssdb.utils.Context;
 import cn.edu.thssdb.utils.Global;
@@ -16,7 +13,9 @@ import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileReader;
 import java.util.HashMap;
+import java.util.List;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
+import java.util.stream.Collectors;
 
 public class Manager {
     private HashMap<String, Database> databases;
@@ -170,6 +169,24 @@ public class Manager {
             database.lock.readLock().unlock();
         }
         throw new RelationNotExist(tableName);
+    }
+
+    public QueryTable getJointTable(List<String> tableNames, Where join) {
+        Database database = getDatabase(context.databaseName);
+        try {
+            database.lock.readLock().lock();
+            for (int i = 0; i < tableNames.size(); i++) {
+                if (!database.tables.containsKey(tableNames.get(i))) {
+                    throw new RelationNotExist(tableNames.get(i));
+                }
+            }
+            List<Table> tables = tableNames.stream()
+                    .map(name -> database.tables.get(name))
+                    .collect(Collectors.toList());
+            return new JointTable(tables, join);
+        } finally {
+            database.lock.readLock().unlock();
+        }
     }
 
     private static class ManagerHolder {

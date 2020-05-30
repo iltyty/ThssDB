@@ -7,11 +7,13 @@ import cn.edu.thssdb.schema.Entry;
 import cn.edu.thssdb.schema.Row;
 
 import java.util.*;
+import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
 public class QueryResult {
     private List<Integer> indices;
     private List<MetaInfo> metaInfos;
+    private Predicate<Row> predicate;
 
     public String[] columnNames;
     public HashSet<Row> distinctResult;
@@ -20,7 +22,7 @@ public class QueryResult {
     public boolean wildcard = false;
     public int count = 0;
 
-    public QueryResult(QueryTable[] queryTables, String[] columnNames, boolean distinct) {
+    public QueryResult(QueryTable[] queryTables, String[] columnNames, Where where, boolean distinct) {
         if (distinct) {
             this.distinctResult = new HashSet<>();
         } else {
@@ -32,6 +34,11 @@ public class QueryResult {
         metaInfos = new ArrayList<>();
         for (QueryTable queryTable : queryTables) {
             metaInfos.addAll(queryTable.genMetaInfo());
+        }
+        if (where != null) {
+            predicate = where.toPredicate(metaInfos);
+        } else {
+            predicate = null;
         }
 
         if (columnNames == null) {
@@ -53,7 +60,7 @@ public class QueryResult {
                 boolean found = false;
                 for (MetaInfo meta : metaInfos) {
                     if (meta.tableName.equals(tableName)) {
-                        int index = meta.columnFind(name);
+                        int index = meta.columnFind(columnName);
                         if (index != -1) {
                             found = true;
                             indices.add(offset + index);
@@ -87,6 +94,9 @@ public class QueryResult {
 
     public void addRow(List<Row> rows) {
         Row row = QueryResult.combineRow(rows);
+        if (predicate != null && !predicate.test(row)) {
+            return;
+        }
         row = generateQueryRecord(row);
         count++;
         if (distinct) {
