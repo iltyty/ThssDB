@@ -11,14 +11,14 @@ public class SQLEvaluator {
         this.manager = manager;
     }
 
-    public String evaluate(String stmt){
+    public SQLEvalResult evaluate(String stmt){
         SQLLexer lexer = new SQLLexer(CharStreams.fromString(stmt));
         SQLParser parser = new SQLParser(new CommonTokenStream(lexer));
         try {
             SQLCustomVisitor visitor = new SQLCustomVisitor(manager);
-            return String.valueOf(visitor.visitParse(parser.parse()));
+            return visitor.visitParse(parser.parse());
         } catch (Exception e) {
-            return "Exception: illegal SQL statement." + e.getMessage();
+            return new SQLEvalResult(e);
         }
     }
 }

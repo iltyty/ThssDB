@@ -20,6 +20,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.PrintStream;
+import java.util.List;
 import java.util.Scanner;
 
 public class Client {
@@ -112,10 +113,21 @@ public class Client {
         ExecuteStatementReq req = new ExecuteStatementReq(sessionId, stmt);
         try {
             ExecuteStatementResp resp = client.executeStatement(req);
-            String msg = ThssDB.getInstance().getEvaluator().evaluate(req.statement);
-            println(msg);
+            if (resp.status.code == 0) {
+                if (resp.status.msg != null) {
+                    println(resp.status.msg);
+                }
+                if (resp.isSetColumnsList()) {
+                    println(String.join(" ", resp.columnsList));
+                    for (List<String> row : resp.rowList) {
+                        println(String.join(" ", row));
+                    }
+                }
+            } else {
+                println(resp.status.msg);
+            }
         } catch (Exception e) {
-            logger.error(e.getMessage());
+            e.printStackTrace();
         }
     }
 

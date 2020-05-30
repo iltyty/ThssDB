@@ -4,14 +4,11 @@ import cn.edu.thssdb.exception.ColumnNotExistException;
 import cn.edu.thssdb.exception.IOException;
 import cn.edu.thssdb.exception.ValueException;
 import cn.edu.thssdb.index.BPlusTree;
-import cn.edu.thssdb.index.BPlusTreeIterator;
 import cn.edu.thssdb.type.ColumnType;
 import cn.edu.thssdb.utils.Global;
 import javafx.util.Pair;
-import sun.awt.SunHints;
 
 import java.io.*;
-import java.lang.reflect.Array;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
@@ -61,7 +58,7 @@ public class Table implements Iterable<Row> {
             return;
         }
         for (File file : files) {
-            String[] filename = file.getName().split(".");
+            String[] filename = file.getName().split("\\.");
             if (filename.length != 3 || !filename[0].equals(this.tableName) || !filename[2].equals("dat")) {
                 continue;
             }
@@ -97,12 +94,22 @@ public class Table implements Iterable<Row> {
 
     private boolean hasColumn(String columnName) {
         for (Column column : columns) {
-            if (column.getName() == columnName) {
+            if (column.getName().equals(columnName)) {
                 return true;
             }
         }
 
         return false;
+    }
+
+    public int findColumnIndex(String name) {
+        for (int i = 0; i < columns.size(); i++) {
+            if (columns.get(i).getName().equals(name)) {
+                return i;
+            }
+        }
+
+        return -1;
     }
 
     public void insert(String[] values, String[] columnNames) {

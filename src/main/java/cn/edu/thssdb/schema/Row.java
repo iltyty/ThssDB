@@ -39,4 +39,12 @@ public class Row implements Serializable {
             sj.add(e.toString());
         return sj.toString();
     }
+
+    public Comparable valueOf(int index) {
+        Entry entry = entries.get(index);
+        if (entry == null) {
+            return null;
+        }
+        return entry.value;
+    }
 }

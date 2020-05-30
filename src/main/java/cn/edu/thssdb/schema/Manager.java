@@ -3,6 +3,11 @@ package cn.edu.thssdb.schema;
 import cn.edu.thssdb.exception.DuplicateDatabaseException;
 import cn.edu.thssdb.exception.IOException;
 import cn.edu.thssdb.exception.KeyNotExistException;
+import cn.edu.thssdb.exception.RelationNotExist;
+import cn.edu.thssdb.query.QueryResult;
+import cn.edu.thssdb.query.QueryTable;
+import cn.edu.thssdb.query.SingleTable;
+import cn.edu.thssdb.query.Where;
 import cn.edu.thssdb.server.ThssDB;
 import cn.edu.thssdb.utils.Context;
 import cn.edu.thssdb.utils.Global;
@@ -147,6 +152,24 @@ public class Manager {
         } finally {
             lock.writeLock().unlock();
         }
+    }
+
+    public QueryResult select(String[] columnNames, QueryTable[] queryTables, Where where, boolean distinct) {
+        Database database = getDatabase(context.databaseName);
+        return database.select(queryTables, columnNames, where, distinct);
+    }
+
+    public QueryTable getSingleTable(String tableName) {
+        Database database = getDatabase(context.databaseName);
+        try {
+            database.lock.readLock().lock();
+            if (database.tables.containsKey(tableName)) {
+                return new SingleTable(database.tables.get(tableName));
+            }
+        } finally {
+            database.lock.readLock().unlock();
+        }
+        throw new RelationNotExist(tableName);
     }
 
     private static class ManagerHolder {

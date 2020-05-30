@@ -1,5 +1,6 @@
 package cn.edu.thssdb.service;
 
+import cn.edu.thssdb.parser.SQLEvalResult;
 import cn.edu.thssdb.parser.SQLEvaluator;
 import cn.edu.thssdb.rpc.thrift.ConnectReq;
 import cn.edu.thssdb.rpc.thrift.ConnectResp;
@@ -14,6 +15,7 @@ import cn.edu.thssdb.server.ThssDB;
 import cn.edu.thssdb.utils.Global;
 import org.apache.thrift.TException;
 
+import java.util.Arrays;
 import java.util.Date;
 
 public class IServiceHandler implements IService.Iface {
@@ -51,9 +53,26 @@ public class IServiceHandler implements IService.Iface {
     @Override
     public ExecuteStatementResp executeStatement(ExecuteStatementReq req) throws TException {
         ExecuteStatementResp resp = new ExecuteStatementResp();
-        resp.setIsAbort(true);
-        resp.setHasResult(true);
-        resp.setStatus(new Status(Global.SUCCESS_CODE));
+        SQLEvalResult result = ThssDB.getInstance().getEvaluator().evaluate(req.statement);
+        if (result.onError()) {
+            resp.setHasResult(false);
+            resp.setIsAbort(true);
+            Status status = new Status();
+            status.setCode(-1);
+            status.setMsg(result.error.getMessage());
+            resp.setStatus(status);
+        } else {
+            resp.setHasResult(true);
+            resp.setIsAbort(false);
+            Status status = new Status();
+            status.setCode(0);
+            status.setMsg(result.message);
+            resp.setStatus(status);
+            if (result.queryResult != null) {
+                resp.setColumnsList(result.queryResult.columnsToString());
+                resp.setRowList(result.queryResult.rowsToString());
+            }
+        }
         return resp;
     }
 }
