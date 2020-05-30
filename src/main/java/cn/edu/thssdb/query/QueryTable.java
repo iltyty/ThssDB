@@ -4,7 +4,6 @@ import cn.edu.thssdb.schema.Column;
 import cn.edu.thssdb.schema.Row;
 
 import java.util.*;
-import java.util.function.Predicate;
 
 public abstract class QueryTable implements Iterator<Row> {
     protected Queue<Row> buffer;

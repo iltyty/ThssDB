@@ -47,4 +47,19 @@ public class Row implements Serializable {
         }
         return entry.value;
     }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+
+        Row row = (Row) o;
+
+        return entries.equals(((Row) o).entries);
+    }
+
+    @Override
+    public int hashCode() {
+        return entries.hashCode();
+    }
 }
