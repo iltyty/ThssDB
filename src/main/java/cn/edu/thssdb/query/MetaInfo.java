@@ -8,8 +8,8 @@ import java.util.List;
 
 class MetaInfo {
 
-    private String tableName;
-    private List<Column> columns;
+    public String tableName;
+    public List<Column> columns;
 
     MetaInfo(String tableName, ArrayList<Column> columns) {
         this.tableName = tableName;
@@ -23,10 +23,6 @@ class MetaInfo {
                 res = i;
             }
         }
-
-        if (res == -1) {
-            throw new ColumnNotExistException(name);
-        }
-        return 0;
+        return res;
     }
 }

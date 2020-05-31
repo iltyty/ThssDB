@@ -39,4 +39,27 @@ public class Row implements Serializable {
             sj.add(e.toString());
         return sj.toString();
     }
+
+    public Comparable valueOf(int index) {
+        Entry entry = entries.get(index);
+        if (entry == null) {
+            return null;
+        }
+        return entry.value;
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+
+        Row row = (Row) o;
+
+        return entries.equals(((Row) o).entries);
+    }
+
+    @Override
+    public int hashCode() {
+        return entries.hashCode();
+    }
 }

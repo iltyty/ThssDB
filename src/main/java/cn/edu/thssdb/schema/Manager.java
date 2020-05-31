@@ -3,6 +3,9 @@ package cn.edu.thssdb.schema;
 import cn.edu.thssdb.exception.DuplicateDatabaseException;
 import cn.edu.thssdb.exception.IOException;
 import cn.edu.thssdb.exception.KeyNotExistException;
+import cn.edu.thssdb.exception.RelationNotExist;
+import cn.edu.thssdb.query.*;
+import cn.edu.thssdb.server.ThssDB;
 import cn.edu.thssdb.utils.Context;
 import cn.edu.thssdb.utils.Global;
 
@@ -10,8 +13,9 @@ import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileReader;
 import java.util.HashMap;
-import java.util.StringJoiner;
+import java.util.List;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
+import java.util.stream.Collectors;
 
 public class Manager {
     private HashMap<String, Database> databases;
@@ -122,16 +126,6 @@ public class Manager {
         }
     }
 
-    public String showDatabases() {
-        StringJoiner sj = new StringJoiner(" ");
-        sj.add("All databases:");
-
-        for (String dbName : databases.keySet()) {
-            sj.add(dbName);
-        }
-        return sj.toString();
-    }
-
     public void insert(String tableName, String[] values, String[] columnNames) {
         Database database = getDatabase(context.databaseName);
         Table table = database.getTable(tableName);
@@ -159,20 +153,40 @@ public class Manager {
         }
     }
 
-    public String showTables(String name) {
-        Database db = getDatabase(name);
-        StringJoiner sj = new StringJoiner(" ");
-        sj.add(String.format("Tables in %s:", name));
+    public QueryResult select(String[] columnNames, QueryTable[] queryTables, Where where, boolean distinct) {
+        Database database = getDatabase(context.databaseName);
+        return database.select(queryTables, columnNames, where, distinct);
+    }
 
+    public QueryTable getSingleTable(String tableName) {
+        Database database = getDatabase(context.databaseName);
         try {
-            db.lock.readLock().lock();
-            for (String tbName : db.tables.keySet()) {
-                sj.add(tbName);
+            database.lock.readLock().lock();
+            if (database.tables.containsKey(tableName)) {
+                return new SingleTable(database.tables.get(tableName));
             }
         } finally {
-            db.lock.readLock().unlock();
+            database.lock.readLock().unlock();
         }
-        return sj.toString();
+        throw new RelationNotExist(tableName);
+    }
+
+    public QueryTable getJointTable(List<String> tableNames, Where join) {
+        Database database = getDatabase(context.databaseName);
+        try {
+            database.lock.readLock().lock();
+            for (int i = 0; i < tableNames.size(); i++) {
+                if (!database.tables.containsKey(tableNames.get(i))) {
+                    throw new RelationNotExist(tableNames.get(i));
+                }
+            }
+            List<Table> tables = tableNames.stream()
+                    .map(name -> database.tables.get(name))
+                    .collect(Collectors.toList());
+            return new JointTable(tables, join);
+        } finally {
+            database.lock.readLock().unlock();
+        }
     }
 
     private static class ManagerHolder {

@@ -3,19 +3,20 @@ package cn.edu.thssdb.schema;
 import cn.edu.thssdb.exception.*;
 import cn.edu.thssdb.query.QueryResult;
 import cn.edu.thssdb.query.QueryTable;
+import cn.edu.thssdb.query.Where;
 import cn.edu.thssdb.type.ColumnType;
-import com.sun.org.apache.xpath.internal.operations.Bool;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileReader;
 import java.io.FileWriter;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.HashSet;
+import java.util.*;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 
 public class Database {
+    private static final Logger logger = LoggerFactory.getLogger(Database.class);
 
     private String name;
     public HashMap<String, Table> tables;
@@ -122,17 +123,54 @@ public class Database {
         file.delete();
     }
 
-    public String select(QueryTable[] queryTables) {
+    public QueryResult select(QueryTable[] queryTables, String[] columnNames, Where where, boolean distinct) {
         try {
             lock.readLock().lock();
-            QueryResult queryResult = new QueryResult(queryTables);
-            for (QueryTable queryTable : queryTables) {
-                // TODO
-            }
+            logger.info("Getting full query result");
+            return getFullQueryResult(queryTables, columnNames, where, distinct);
         } finally {
             lock.readLock().unlock();
         }
-        return null;
+    }
+
+    private QueryResult getFullQueryResult(QueryTable[] queryTables, String[] columnNames, Where where, boolean distinct) {
+        // cartesian product
+        QueryResult queryResult = new QueryResult(queryTables, columnNames, where, distinct);
+        LinkedList<Row> rows = new LinkedList<>();
+        while (true) {
+            if (rows.isEmpty()) {
+                for (QueryTable queryTable : queryTables) {
+                    if (!queryTable.hasNext()) {
+                        return queryResult;
+                    }
+                    rows.push(queryTable.next());
+                }
+            } else {
+                int index;
+                for (index = queryTables.length - 1; index >= 0; index--) {
+                    rows.pop();
+                    if (!queryTables[index].hasNext()) {
+                        queryTables[index].clear();
+                    } else {
+                        break;
+                    }
+                }
+                if (index < 0) {
+                    break;
+                }
+                for (int i = index; i < queryTables.length; i++) {
+                    if (!queryTables[i].hasNext()) {
+                        break;
+                    }
+                    rows.push(queryTables[i].next());
+                }
+            }
+            if (rows.stream().anyMatch(Objects::isNull)) {
+                return queryResult;
+            }
+            queryResult.addRow(rows);
+        }
+        return queryResult;
     }
 
     private void recover() {
@@ -143,7 +181,7 @@ public class Database {
         }
         for (File file : files) {
             String fileName = file.getName();
-            String[] names = fileName.split(".");
+            String[] names = fileName.split("\\.");
             if (names.length != 2 || !names[1].equals("meta")) {
                 continue;
             }
