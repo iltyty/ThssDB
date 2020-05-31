@@ -1,4 +1,4 @@
-// Generated from /Users/anyanzhe/workspace/ThssDB/src/main/java/cn/edu/thssdb/parser/SQL.g4 by ANTLR 4.8
+// Generated from Q:/myProjects/ThssDB/src/main/java/cn/edu/thssdb/parser\SQL.g4 by ANTLR 4.8
 package cn.edu.thssdb.parser;
 
 import org.antlr.v4.runtime.ParserRuleContext;
@@ -423,6 +423,42 @@ public class SQLBaseListener implements SQLListener {
      */
     @Override
     public void exitUpdate_stmt(SQLParser.Update_stmtContext ctx) {
+    }
+
+    /**
+     * {@inheritDoc}
+     *
+     * <p>The default implementation does nothing.</p>
+     */
+    @Override
+    public void enterBegin_transaction_stmt(SQLParser.Begin_transaction_stmtContext ctx) {
+    }
+
+    /**
+     * {@inheritDoc}
+     *
+     * <p>The default implementation does nothing.</p>
+     */
+    @Override
+    public void exitBegin_transaction_stmt(SQLParser.Begin_transaction_stmtContext ctx) {
+    }
+
+    /**
+     * {@inheritDoc}
+     *
+     * <p>The default implementation does nothing.</p>
+     */
+    @Override
+    public void enterCommit_stmt(SQLParser.Commit_stmtContext ctx) {
+    }
+
+    /**
+     * {@inheritDoc}
+     *
+     * <p>The default implementation does nothing.</p>
+     */
+    @Override
+    public void exitCommit_stmt(SQLParser.Commit_stmtContext ctx) {
     }
 
     /**
