@@ -5,7 +5,6 @@ import cn.edu.thssdb.exception.IOException;
 import cn.edu.thssdb.exception.KeyNotExistException;
 import cn.edu.thssdb.exception.RelationNotExist;
 import cn.edu.thssdb.query.*;
-import cn.edu.thssdb.server.ThssDB;
 import cn.edu.thssdb.utils.Context;
 import cn.edu.thssdb.utils.Global;
 
@@ -14,6 +13,7 @@ import java.io.File;
 import java.io.FileReader;
 import java.util.HashMap;
 import java.util.List;
+import java.util.StringJoiner;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 import java.util.stream.Collectors;
 
@@ -124,6 +124,33 @@ public class Manager {
         } finally {
             lock.readLock().unlock();
         }
+    }
+
+    public String showDatabases() {
+        StringJoiner sj = new StringJoiner(" ");
+        try {
+            lock.readLock().lock();
+            for (String name : databases.keySet()) {
+                sj.add(name);
+            }
+        } finally {
+            lock.readLock().unlock();
+        }
+        return "All databases: " + sj.toString();
+    }
+
+    public String showTables(String name) {
+        Database db = getDatabase(name);
+        StringJoiner sj = new StringJoiner(" ");
+        try {
+            db.lock.readLock().lock();
+            for (String s : db.tables.keySet()) {
+                sj.add(s);
+            }
+        } finally {
+            db.lock.readLock().unlock();
+        }
+        return String.format("Tabels in %s: %s", name, sj.toString());
     }
 
     public void insert(String tableName, String[] values, String[] columnNames) {

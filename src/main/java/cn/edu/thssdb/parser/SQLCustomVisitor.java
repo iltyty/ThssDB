@@ -1,16 +1,13 @@
 package cn.edu.thssdb.parser;
 
 import cn.edu.thssdb.exception.ColumnNotExistException;
-import cn.edu.thssdb.exception.ValueException;
 import cn.edu.thssdb.query.*;
 import cn.edu.thssdb.schema.Column;
 import cn.edu.thssdb.schema.Manager;
 import cn.edu.thssdb.type.ColumnType;
 import javafx.util.Pair;
 
-import java.util.ArrayList;
 import java.util.List;
-import java.util.StringJoiner;
 import java.util.stream.Collectors;
 
 public class SQLCustomVisitor extends SQLBaseVisitor {
@@ -46,11 +43,17 @@ public class SQLCustomVisitor extends SQLBaseVisitor {
         } else if (ctx.use_db_stmt() != null) {
             String msg = visitUse_db_stmt(ctx.use_db_stmt());
             result.setMessage(msg);
+        } else if (ctx.show_db_stmt() != null) {
+            String msg = visitShow_db_stmt(ctx.show_db_stmt());
+            result.setMessage(msg);
         } else if (ctx.create_table_stmt() != null) {
             String msg = visitCreate_table_stmt(ctx.create_table_stmt());
             result.setMessage(msg);
         } else if (ctx.drop_table_stmt() != null) {
             String msg = visitDrop_table_stmt(ctx.drop_table_stmt());
+            result.setMessage(msg);
+        } else if (ctx.show_table_stmt() != null) {
+            String msg = visitShow_table_stmt(ctx.show_table_stmt());
             result.setMessage(msg);
         } else if (ctx.insert_stmt() != null) {
             String msg = visitInsert_stmt(ctx.insert_stmt());
@@ -80,6 +83,11 @@ public class SQLCustomVisitor extends SQLBaseVisitor {
         String dbName = ctx.database_name().getText();
         manager.switchDatabase(dbName);
         return String.format("Switched to database '%s'", dbName);
+    }
+
+    @Override
+    public String visitShow_db_stmt(SQLParser.Show_db_stmtContext ctx) {
+        return manager.showDatabases();
     }
 
     private boolean equals(String columnName1, String columnName2) {
@@ -130,6 +138,11 @@ public class SQLCustomVisitor extends SQLBaseVisitor {
         String tbName = ctx.table_name().getText();
         manager.deleteTable(tbName, ctx.K_IF() != null);
         return String.format("Dropped table '%s'", tbName);
+    }
+
+    @Override
+    public String visitShow_table_stmt(SQLParser.Show_table_stmtContext ctx) {
+        return manager.showTables(ctx.database_name().getText().toLowerCase());
     }
 
     @Override
