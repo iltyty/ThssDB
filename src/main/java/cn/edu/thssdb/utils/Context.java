@@ -1,5 +1,7 @@
 package cn.edu.thssdb.utils;
 
+import java.util.HashMap;
+
 public class Context {
     public String databaseName;
 

@@ -5,6 +5,7 @@ import cn.edu.thssdb.exception.IOException;
 import cn.edu.thssdb.exception.KeyNotExistException;
 import cn.edu.thssdb.exception.RelationNotExist;
 import cn.edu.thssdb.query.*;
+import cn.edu.thssdb.transaction.LockManager;
 import cn.edu.thssdb.utils.Context;
 import cn.edu.thssdb.utils.Global;
 
@@ -20,6 +21,7 @@ import java.util.stream.Collectors;
 public class Manager {
     private HashMap<String, Database> databases;
     public Context context;
+    public LockManager lockManager;
     private static ReentrantReadWriteLock lock = new ReentrantReadWriteLock();
 
     public static Manager getInstance() {
@@ -233,6 +235,12 @@ public class Manager {
             return table.delete(where);
         } finally {
             database.lock.writeLock().unlock();
+        }
+    }
+
+    public void commit() {
+        for (Database database : databases.values()) {
+            database.commit();
         }
     }
 

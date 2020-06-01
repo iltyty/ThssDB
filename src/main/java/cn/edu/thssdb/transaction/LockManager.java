@@ -26,9 +26,7 @@ public class LockManager {
     }
 
     public void releaseLocks(String sessionId) {
-        if (lockTable.containsKey(sessionId)) {
-            lockTable.remove(sessionId);
-        }
+        lockTable.remove(sessionId);
     }
 
 }

@@ -255,7 +255,7 @@ public class Database {
         }
     }
 
-    public void quit() {
+    public void commit() {
         try {
             lock.writeLock().lock();
             persist();

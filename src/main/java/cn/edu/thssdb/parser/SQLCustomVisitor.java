@@ -67,6 +67,10 @@ public class SQLCustomVisitor extends SQLBaseVisitor {
         } else if (ctx.delete_stmt() != null) {
             String msg = visitDelete_stmt(ctx.delete_stmt());
             result.setMessage(msg);
+        } else if (ctx.begin_transaction_stmt() != null) {
+            visitBegin_transaction_stmt(ctx.begin_transaction_stmt());
+        } else if (ctx.commit_stmt() != null) {
+            visitCommit_stmt(ctx.commit_stmt());
         }
     }
 
@@ -227,6 +231,19 @@ public class SQLCustomVisitor extends SQLBaseVisitor {
         }
         int count = manager.delete(tableName, where);
         return "Deleted " + count + " rows.";
+    }
+
+    @Override
+    public Object visitBegin_transaction_stmt(SQLParser.Begin_transaction_stmtContext ctx) {
+        manager.context.autoCommit = false;
+        return null;
+    }
+
+    @Override
+    public Object visitCommit_stmt(SQLParser.Commit_stmtContext ctx) {
+        manager.context.autoCommit = true;
+        manager.commit();
+        return null;
     }
 
     @Override
