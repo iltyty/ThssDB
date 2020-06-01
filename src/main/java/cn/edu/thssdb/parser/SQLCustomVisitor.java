@@ -61,6 +61,12 @@ public class SQLCustomVisitor extends SQLBaseVisitor {
         } else if (ctx.select_stmt() != null) {
             QueryResult queryResult = visitSelect_stmt(ctx.select_stmt());
             result.setQueryResult(queryResult);
+        } else if (ctx.update_stmt() != null) {
+            String msg = visitUpdate_stmt(ctx.update_stmt());
+            result.setMessage(msg);
+        } else if (ctx.delete_stmt() != null) {
+            String msg = visitDelete_stmt(ctx.delete_stmt());
+            result.setMessage(msg);
         }
     }
 
@@ -197,6 +203,30 @@ public class SQLCustomVisitor extends SQLBaseVisitor {
             where = visitMultiple_condition(ctx.multiple_condition());
         }
         return manager.select(columnNames, queryTables, where, distinct);
+    }
+
+    @Override
+    public String visitUpdate_stmt(SQLParser.Update_stmtContext ctx) {
+        String tableName = ctx.table_name().getText().toLowerCase();
+        String columnName = ctx.column_name().getText().toLowerCase();
+        Expr expr = visitExpression(ctx.expression());
+        Where where = null;
+        if (ctx.K_WHERE() != null) {
+            where = visitMultiple_condition(ctx.multiple_condition());
+        }
+        int count = manager.update(tableName, columnName, expr, where);
+        return "Updated " + count + " rows.";
+    }
+
+    @Override
+    public String visitDelete_stmt(SQLParser.Delete_stmtContext ctx) {
+        String tableName = ctx.table_name().getText().toLowerCase();
+        Where where = null;
+        if (ctx.K_WHERE() != null) {
+            where = visitMultiple_condition(ctx.multiple_condition());
+        }
+        int count = manager.delete(tableName, where);
+        return "Deleted " + count + " rows.";
     }
 
     @Override

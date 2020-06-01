@@ -4,16 +4,17 @@ import cn.edu.thssdb.exception.ColumnNotExistException;
 import cn.edu.thssdb.exception.IOException;
 import cn.edu.thssdb.exception.ValueException;
 import cn.edu.thssdb.index.BPlusTree;
+import cn.edu.thssdb.query.Expr;
+import cn.edu.thssdb.query.MetaInfo;
+import cn.edu.thssdb.query.Where;
 import cn.edu.thssdb.type.ColumnType;
 import cn.edu.thssdb.utils.Global;
 import javafx.util.Pair;
 
 import java.io.*;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.HashMap;
-import java.util.Iterator;
+import java.util.*;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
+import java.util.function.Function;
 import java.util.function.Predicate;
 
 public class Table implements Iterable<Row> {
@@ -102,14 +103,8 @@ public class Table implements Iterable<Row> {
         return false;
     }
 
-    public int findColumnIndex(String name) {
-        for (int i = 0; i < columns.size(); i++) {
-            if (columns.get(i).getName().equals(name)) {
-                return i;
-            }
-        }
-
-        return -1;
+    public MetaInfo getMetaInfo() {
+        return new MetaInfo(tableName, columns);
     }
 
     public void insert(String[] values, String[] columnNames) {
@@ -168,14 +163,20 @@ public class Table implements Iterable<Row> {
         }
     }
 
-    public int delete(Predicate<Row> predicate) {
+    public int delete(Where where) {
         // delete rows that matches a predicate?
         // For now, I will just use a `Predicate<Row>`
+        Predicate<Row> predicate = null;
+        if (where != null) {
+            predicate = where.toPredicate(new ArrayList<MetaInfo>() {{
+                add(getMetaInfo());
+            }});
+        }
         try {
             lock.writeLock().lock();
             int deleteCount = 0;
             for (Row row : this) {
-                if (predicate.test(row)) {
+                if (predicate == null || predicate.test(row)) {
                     deleteCount++;
                     Entry primaryKey = row.getEntries().get(primaryIndex);
                     index.remove(primaryKey);
@@ -198,51 +199,56 @@ public class Table implements Iterable<Row> {
         }
     }
 
-    public int update(String[] columnNames, String[] values, Predicate<Row> predicate) {
-        // same as above
-        if (columnNames.length != columns.size() || values.length != columnNames.length) {
-            throw new ValueException("Count of values does not match count of columns");
-        }
-        int[] indexes = new int[values.length];
-        for (int i = 0; i < columnNames.length; i++) {
-            int j = 0;
-            for (; j < columns.size(); j++) {
-                if (columns.get(j).getName().equals(columnNames[i])) {
-                    indexes[i] = j;
-                    break;
-                }
-            }
-            if (j == columns.size()) {
-                throw new ValueException("Column not found");
+    public int update(String columnName, Expr expr, Where where) {
+        Column column = null;
+        int i;
+        for (i = 0; i < columns.size(); i++) {
+            if (columns.get(i).getName().equals(columnName)) {
+                column = columns.get(i);
+                break;
             }
         }
+        if (column == null) {
+            throw new ColumnNotExistException(columnName);
+        }
+        MetaInfo metaInfo = getMetaInfo();
+        List<MetaInfo> metaInfos = new ArrayList<>();
+        metaInfos.add(metaInfo);
+        Predicate<Row> predicate = null;
+        if (where != null) {
+            predicate = where.toPredicate(metaInfos);
+        }
+        Function<Row, Comparable> func = expr.extractor(metaInfos);
 
         try {
             lock.writeLock().lock();
             int updateCount = 0;
             for (Row row : this) {
-                if (predicate.test(row)) {
+                if (predicate == null || predicate.test(row)) {
                     updateCount++;
+                    int oldSize = row.toString().length();
                     Page page = pages.get(row.getPage());
                     Entry oldEntry = row.getEntries().get(primaryIndex);
-                    page.delete(oldEntry, row.toString().length());
-                    page.dirty = true;
-
-                    boolean primaryChanged = false;
-                    Entry newEntry = null;
-                    for (int i = 0; i < values.length; i++) {
-                        Entry entry = getValue(values[i], columns.get(indexes[i]).getType());
-                        row.entries.set(indexes[i], entry);
-                        if (indexes[i] == primaryIndex) {
-                            newEntry = entry;
+                    Comparable newValue = func.apply(row);
+                    newValue = Global.comparableToColumnType(newValue, column);
+                    Entry newEntry = new Entry(newValue);
+                    if (column.getPrimary() == 1) {
+                        row.entries.set(i, newEntry);
+                        page.entries.remove(oldEntry);
+                        page.entries.add(newEntry);
+                        if (index.contains(newEntry)) {
+                            index.remove(oldEntry);
+                            index.update(newEntry, row);
+                        } else {
+                            index.remove(oldEntry);
+                            index.put(newEntry, row);
                         }
+                    } else {
+                        row.entries.set(i, newEntry);
                     }
-
-                    page.insert(newEntry, row.toString().length());
-                    if (newEntry != null) {
-                        index.remove(oldEntry);
-                        index.put(newEntry, row);
-                    }
+                    page.dirty = true;
+                    int newSize = row.toString().length();
+                    page.updateSize(oldSize, newSize);
                 }
             }
 

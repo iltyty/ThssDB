@@ -216,6 +216,28 @@ public class Manager {
         }
     }
 
+    public int update(String tableName, String columnName, Expr value, Where where) {
+        Database database = getDatabase(context.databaseName);
+        try {
+            database.lock.writeLock().lock();
+            Table table = database.tables.get(tableName);
+            return table.update(columnName, value, where);
+        } finally {
+            database.lock.writeLock().unlock();
+        }
+    }
+
+    public int delete(String tableName, Where where) {
+        Database database = getDatabase(context.databaseName);
+        try {
+            database.lock.writeLock().lock();
+            Table table = database.tables.get(tableName);
+            return table.delete(where);
+        } finally {
+            database.lock.writeLock().unlock();
+        }
+    }
+
     private static class ManagerHolder {
         private static final Manager INSTANCE = new Manager(new Context(Global.ADMIN_DB_NAME));
 

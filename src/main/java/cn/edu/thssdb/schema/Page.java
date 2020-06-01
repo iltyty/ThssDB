@@ -26,4 +26,9 @@ public class Page {
         entries.remove(entry);
         this.size -= size;
     }
+
+    public void updateSize(int old, int newSize) {
+        this.size -= old;
+        this.size += newSize;
+    }
 }

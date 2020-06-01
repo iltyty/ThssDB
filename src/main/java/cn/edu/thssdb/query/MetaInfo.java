@@ -6,12 +6,12 @@ import cn.edu.thssdb.schema.Column;
 import java.util.ArrayList;
 import java.util.List;
 
-class MetaInfo {
+public class MetaInfo {
 
     public String tableName;
     public List<Column> columns;
 
-    MetaInfo(String tableName, ArrayList<Column> columns) {
+    public MetaInfo(String tableName, ArrayList<Column> columns) {
         this.tableName = tableName;
         this.columns = columns;
     }
