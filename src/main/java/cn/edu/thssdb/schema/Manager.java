@@ -19,7 +19,7 @@ import java.util.stream.Collectors;
 
 public class Manager {
     private HashMap<String, Database> databases;
-    private Context context;
+    public Context context;
     private static ReentrantReadWriteLock lock = new ReentrantReadWriteLock();
 
     public static Manager getInstance() {
@@ -33,8 +33,6 @@ public class Manager {
         createDatabaseIfNotExists();
     }
 
-    public Context getContext() { return context; }
-
     private void recoverDatabase() {
         File file = new File("./db.meta");
         if (!file.exists()) {
@@ -47,7 +45,7 @@ public class Manager {
             throw new IOException("Error reading manager meta file");
         }
         reader.lines().forEach(name -> {
-            Database db = new Database(name);
+            Database db = new Database(name, context);
             databases.put(name, db);
         });
         try {
@@ -101,7 +99,7 @@ public class Manager {
             if (databases.containsKey(name)) {
                 throw new DuplicateDatabaseException(name);
             }
-            Database db = new Database(name);
+            Database db = new Database(name, context);
             // create directory for database
             File dir = new File("./" + name);
             if (!dir.exists()) {

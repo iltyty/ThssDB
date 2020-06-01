@@ -5,6 +5,7 @@ import cn.edu.thssdb.query.QueryResult;
 import cn.edu.thssdb.query.QueryTable;
 import cn.edu.thssdb.query.Where;
 import cn.edu.thssdb.type.ColumnType;
+import cn.edu.thssdb.utils.Context;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -18,33 +19,45 @@ import java.util.concurrent.locks.ReentrantReadWriteLock;
 public class Database {
     private static final Logger logger = LoggerFactory.getLogger(Database.class);
 
+    private Context context;
+
     private String name;
     public HashMap<String, Table> tables;
     ReentrantReadWriteLock lock;
 
-    public Database(String name) {
+    public Database(String name, Context context) {
         this.name = name;
         this.tables = new HashMap<>();
         this.lock = new ReentrantReadWriteLock();
+        this.context = context;
         recover();
     }
 
     private void persist() {
         for (Table table: tables.values()) {
-            File metaFile = new File("./" + this.name + "/" + table.tableName + ".meta");
-            FileWriter writer;
+            persistTable(table);
+        }
+    }
+
+    private void persistTable(Table table) {
+        File metaFile = new File("./" + name + "/" + table.tableName + ".meta");
+        FileWriter writer;
+        try {
+            writer = new FileWriter(metaFile);
+        } catch (Exception e) {
+            throw new IOException("Cannot open table meta file of " + table.tableName);
+        }
+        for (Column column : table.columns) {
             try {
-                writer = new FileWriter(metaFile);
+                writer.write(column.toString() + "\n");
             } catch (Exception e) {
-                throw new IOException("Cannot open table meta file of " + table.tableName);
+                throw new IOException("Cannot write to table meta file of " + table.tableName);
             }
-            for (Column column : table.columns) {
-                try {
-                    writer.write(column.toString() + "\n");
-                } catch (Exception e) {
-                    throw new IOException("Cannot write to table meta file of" + table.tableName);
-                }
-            }
+        }
+        try {
+            writer.close();
+        } catch (Exception e) {
+            throw new IOException("Cannot close meta file descriptor of " + table.tableName);
         }
     }
 
@@ -85,18 +98,21 @@ public class Database {
             Table table;
             if (primaryExisted == 1) {
                 // single primary key
-                table = new Table(this.name, name, columns);
+                table = new Table(this.name, name, columns, context);
             } else {
                 // composite primary key
                 Column primaryColumn = new Column("uuid", ColumnType.LONG, 1, true, -1);
                 Column[] newColumns = new Column[columns.length + 1];
                 System.arraycopy(columns, 0, newColumns, 0, columns.length);
                 newColumns[columns.length] = primaryColumn;
-                table = new Table(this.name, name, newColumns);
+                table = new Table(this.name, name, newColumns, context);
             }
 
             tables.put(name, table);
 
+            if (context.autoCommit) {
+                persistTable(table);
+            }
         } finally {
             lock.writeLock().unlock();
         }
@@ -222,7 +238,7 @@ public class Database {
                 throw new IOException("Cannot close table meta file of " + names[0]);
             }
 
-            Table table = new Table(this.name, names[0], columns.toArray(new Column[0]));
+            Table table = new Table(this.name, names[0], columns.toArray(new Column[0]), context);
             this.tables.put(names[0], table);
         }
     }

@@ -8,6 +8,7 @@ import cn.edu.thssdb.query.Expr;
 import cn.edu.thssdb.query.MetaInfo;
 import cn.edu.thssdb.query.Where;
 import cn.edu.thssdb.type.ColumnType;
+import cn.edu.thssdb.utils.Context;
 import cn.edu.thssdb.utils.Global;
 import javafx.util.Pair;
 
@@ -18,6 +19,7 @@ import java.util.function.Function;
 import java.util.function.Predicate;
 
 public class Table implements Iterable<Row> {
+    private Context context;
     ReentrantReadWriteLock lock;
     private String databaseName;
     public String tableName;
@@ -27,7 +29,8 @@ public class Table implements Iterable<Row> {
     private HashMap<Integer, Page> pages;
     private int currentPage;
 
-    public Table(String databaseName, String tableName, Column[] columns) {
+    public Table(String databaseName, String tableName, Column[] columns, Context ctx) {
+        this.context = ctx;
         this.lock = new ReentrantReadWriteLock();
         this.databaseName = databaseName;
         this.tableName = tableName;
@@ -158,9 +161,14 @@ public class Table implements Iterable<Row> {
                 getNewPage();
             }
             index.put(primaryEntry, row);
+
+            if (context.autoCommit) {
+                commit();
+            }
         } finally {
             lock.writeLock().unlock();
         }
+
     }
 
     public int delete(Where where) {
@@ -184,6 +192,10 @@ public class Table implements Iterable<Row> {
                     page.delete(primaryKey, row.toString().length());
                     page.dirty = true;
                 }
+            }
+
+            if (context.autoCommit) {
+                commit();
             }
 
             return deleteCount;
@@ -250,6 +262,10 @@ public class Table implements Iterable<Row> {
                     int newSize = row.toString().length();
                     page.updateSize(oldSize, newSize);
                 }
+            }
+
+            if (context.autoCommit) {
+                commit();
             }
 
             return updateCount;

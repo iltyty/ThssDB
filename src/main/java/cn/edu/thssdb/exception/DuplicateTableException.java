@@ -9,6 +9,6 @@ public class DuplicateTableException extends RuntimeException {
 
     @Override
     public String getMessage() {
-        return tableName;
+        return String.format("Table %s already exists", tableName);
     }
 }
