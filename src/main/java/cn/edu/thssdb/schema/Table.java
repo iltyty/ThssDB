@@ -1,6 +1,7 @@
 package cn.edu.thssdb.schema;
 
 import cn.edu.thssdb.exception.ColumnNotExistException;
+import cn.edu.thssdb.exception.DuplicateKeyException;
 import cn.edu.thssdb.exception.IOException;
 import cn.edu.thssdb.exception.ValueException;
 import cn.edu.thssdb.index.BPlusTree;
@@ -85,7 +86,10 @@ public class Table implements Iterable<Row> {
                 ArrayList<Entry> entries = row.getEntries();
                 for (int i = 0; i < entries.size(); i++) {
                     if (i == primaryIndex) {
-                        index.put(entries.get(i), row);
+                        try {
+                            index.put(entries.get(i), row);
+                        } catch (DuplicateKeyException ignored) {
+                        }
                         page.entries.add(entries.get(i));
                         break;
                     }
