@@ -176,9 +176,21 @@ public class SQLCustomVisitor extends SQLBaseVisitor {
     public String[] visitValue_entry(SQLParser.Value_entryContext ctx) {
         String[] values = new String[ctx.literal_value().size()];
         for (int i = 0; i < ctx.literal_value().size(); i++) {
-            values[i] = ctx.literal_value(i).getText();
+            // Have to make this hack to remove quotes from string
+            values[i] = getLiteralValue(ctx.literal_value(i));
         }
         return values;
+    }
+
+    public String getLiteralValue(SQLParser.Literal_valueContext ctx) {
+        if (ctx.NUMERIC_LITERAL() != null) {
+            return ctx.NUMERIC_LITERAL().getText();
+        } else if (ctx.K_NULL() != null) {
+            return "null";
+        } else {
+            String quoted = ctx.STRING_LITERAL().getText();
+            return quoted.substring(1, quoted.length() - 1);
+        }
     }
 
     @Override
@@ -312,7 +324,9 @@ public class SQLCustomVisitor extends SQLBaseVisitor {
         } else if (ctx.K_NULL() != null) {
             return new Value(null, Value.Type.NULL);
         } else {
-            return new Value(ctx.STRING_LITERAL().getText(), Value.Type.STRING);
+            String quoted = ctx.STRING_LITERAL().getText();
+            String real = quoted.substring(1, quoted.length() - 1);
+            return new Value(real, Value.Type.STRING);
         }
     }
 
