@@ -235,14 +235,14 @@ public class SQLCustomVisitor extends SQLBaseVisitor {
 
     @Override
     public Object visitBegin_transaction_stmt(SQLParser.Begin_transaction_stmtContext ctx) {
-        manager.context.autoCommit = false;
+        manager.beginTransaction();
         return null;
     }
 
     @Override
     public Object visitCommit_stmt(SQLParser.Commit_stmtContext ctx) {
-        manager.context.autoCommit = true;
         manager.commit();
+        manager.endTransaction();
         return null;
     }
 

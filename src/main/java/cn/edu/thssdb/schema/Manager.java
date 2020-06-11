@@ -238,6 +238,16 @@ public class Manager {
         }
     }
 
+    public void beginTransaction() {
+        context.mutex.lock();
+        context.autoCommit = false;
+    }
+
+    public void endTransaction() {
+        context.autoCommit = true;
+        context.mutex.unlock();
+    }
+
     public void commit() {
         for (Database database : databases.values()) {
             database.commit();
