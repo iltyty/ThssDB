@@ -126,14 +126,17 @@ public class QueryResult {
     }
 
     public List<String> columnsToString() {
-        if (wildcard) {
+        if (wildcard && metaInfos.size() != 1) {
             return metaInfos.stream()
                     .flatMap(metaInfo -> metaInfo.columns
                             .stream()
                             .map(column -> metaInfo.tableName + "." + column.getName()))
                     .collect(Collectors.toList());
         } else {
-            return Arrays.asList(columnNames);
+            return metaInfos.stream()
+                    .flatMap(metaInfo -> metaInfo.columns
+                    .stream()
+                    .map(Column::getName)).collect(Collectors.toList());
         }
     }
 
