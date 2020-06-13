@@ -1,9 +1,7 @@
 package cn.edu.thssdb.schema;
 
-import cn.edu.thssdb.exception.DuplicateDatabaseException;
+import cn.edu.thssdb.exception.*;
 import cn.edu.thssdb.exception.IOException;
-import cn.edu.thssdb.exception.KeyNotExistException;
-import cn.edu.thssdb.exception.RelationNotExist;
 import cn.edu.thssdb.query.*;
 import cn.edu.thssdb.transaction.LockManager;
 import cn.edu.thssdb.utils.Context;
@@ -88,6 +86,12 @@ public class Manager {
     public void deleteDatabase(String name) {
         try {
             lock.writeLock().lock();
+            if (name.equals("admin")) {
+                throw new PermissionException();
+            }
+            if (context.databaseName.equals(name)) {
+                context.databaseName = "admin";
+            }
             Database db = databases.get(name);
             if (db == null) {
                 throw new KeyNotExistException();

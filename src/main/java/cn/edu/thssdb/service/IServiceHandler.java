@@ -24,7 +24,7 @@ public class IServiceHandler implements IService.Iface {
     public ConnectResp connect(ConnectReq req) throws TException {
         // TODO
         ConnectResp resp = new ConnectResp();
-        if (req.username.equals("ThssDB") && req.password.equals("")) {
+        if (req.username.equals("username") && req.password.equals("password")) {
             resp.setSessionId(req.hashCode());
             resp.setStatus(new Status(Global.SUCCESS_CODE));
             return resp;
