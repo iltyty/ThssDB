@@ -195,6 +195,10 @@ public class Database {
         if (files == null) {
             return;
         }
+        File logFile = new File("./" + this.name + "/.log");
+        if (logFile.exists()) {
+            logFile.delete();
+        }
         for (File file : files) {
             String fileName = file.getName();
             String[] names = fileName.split("\\.");

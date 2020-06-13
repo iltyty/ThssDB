@@ -43,6 +43,7 @@ public class SQLCustomVisitor extends SQLBaseVisitor {
         } else if (ctx.use_db_stmt() != null) {
             String msg = visitUse_db_stmt(ctx.use_db_stmt());
             result.setMessage(msg);
+        } else if (ctx.show_table_stmt() != null) {
         } else if (ctx.show_db_stmt() != null) {
             String msg = visitShow_db_stmt(ctx.show_db_stmt());
             result.setMessage(msg);
@@ -253,7 +254,6 @@ public class SQLCustomVisitor extends SQLBaseVisitor {
 
     @Override
     public Object visitCommit_stmt(SQLParser.Commit_stmtContext ctx) {
-        manager.commit();
         manager.endTransaction();
         return null;
     }
