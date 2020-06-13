@@ -8,10 +8,12 @@ import cn.edu.thssdb.query.*;
 import cn.edu.thssdb.transaction.LockManager;
 import cn.edu.thssdb.utils.Context;
 import cn.edu.thssdb.utils.Global;
+import com.sun.xml.internal.ws.policy.privateutil.PolicyUtils;
 
-import java.io.BufferedReader;
-import java.io.File;
-import java.io.FileReader;
+import java.io.*;
+import java.nio.file.Files;
+import java.nio.file.OpenOption;
+import java.nio.file.Paths;
 import java.util.HashMap;
 import java.util.List;
 import java.util.StringJoiner;
@@ -69,6 +71,20 @@ public class Manager {
         }
     }
 
+    private void syncMetafile() {
+        File metafile = new File("./db.meta");
+        try {
+            metafile.createNewFile();
+            FileWriter writer = new FileWriter(metafile);
+            for (String dbName : databases.keySet()) {
+                writer.write(dbName + "\n");
+            }
+            writer.close();
+        } catch (java.io.IOException e) {
+            throw new IOException("Error writing to manager meta file");
+        }
+    }
+
     public void deleteDatabase(String name) {
         try {
             lock.writeLock().lock();
@@ -78,6 +94,7 @@ public class Manager {
             }
             db.dropAll();
             databases.remove(name);
+            syncMetafile();
         } finally {
             lock.writeLock().unlock();
         }
@@ -108,10 +125,11 @@ public class Manager {
                 dir.mkdir();
             }
             databases.put(name, db);
+            // write database names to metafile
+            syncMetafile();
         } finally {
             lock.writeLock().unlock();
         }
-
     }
 
     public Database getDatabase(String name) {
