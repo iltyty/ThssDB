@@ -14,6 +14,9 @@ public class SQLEvaluator {
     public SQLEvalResult evaluate(String stmt){
         SQLLexer lexer = new SQLLexer(CharStreams.fromString(stmt));
         SQLParser parser = new SQLParser(new CommonTokenStream(lexer));
+        // Hack ?
+        manager.context.mutex.lock();
+        manager.context.mutex.unlock();
         try {
             SQLCustomVisitor visitor = new SQLCustomVisitor(manager);
             return visitor.visitParse(parser.parse());
