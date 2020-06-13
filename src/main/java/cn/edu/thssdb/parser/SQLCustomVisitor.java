@@ -360,8 +360,13 @@ public class SQLCustomVisitor extends SQLBaseVisitor {
 
     @Override
     public QueryTable visitTable_query(SQLParser.Table_queryContext ctx) {
+        String alias = null;
+        if (ctx.K_AS() != null) {
+            List<SQLParser.Table_nameContext> tableName = ctx.table_name();
+            alias = tableName.get(tableName.size() - 1).getText().toLowerCase();
+        }
         if (ctx.K_JOIN().size() == 0) {
-            return manager.getSingleTable(ctx.table_name(0).getText().toLowerCase());
+            return manager.getSingleTable(ctx.table_name(0).getText().toLowerCase(), alias);
         }
         Where join = visitMultiple_condition(ctx.multiple_condition());
         List<String> tableNames = ctx
@@ -369,7 +374,8 @@ public class SQLCustomVisitor extends SQLBaseVisitor {
                 .stream()
                 .map(sCtx -> sCtx.getText().toLowerCase())
                 .collect(Collectors.toList());
-        return manager.getJointTable(tableNames, join);
+        tableNames.remove(tableNames.size() - 1);
+        return manager.getJointTable(tableNames, join, alias);
     }
 
     @Override

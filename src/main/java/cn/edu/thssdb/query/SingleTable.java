@@ -9,10 +9,16 @@ import java.util.Iterator;
 public class SingleTable extends QueryTable implements Iterator<Row> {
     private Table table;
     private Iterator<Row> iterator;
+    private String tableName;
 
-    public SingleTable(Table table) {
+    public SingleTable(Table table, String alias) {
         super();
         this.table = table;
+        if (alias != null) {
+            tableName = alias;
+        } else {
+            tableName = table.tableName;
+        }
         iterator = table.iterator();
         columns = table.columns;
         putRowsToBuffer();
@@ -28,7 +34,7 @@ public class SingleTable extends QueryTable implements Iterator<Row> {
     @Override
     public ArrayList<MetaInfo> genMetaInfo() {
         return new ArrayList<MetaInfo>() {{
-            add(new MetaInfo(table.tableName, table.columns));
+            add(new MetaInfo(tableName, table.columns));
         }};
     }
 

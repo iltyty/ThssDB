@@ -143,8 +143,7 @@ result_column
     | column_full_name;
 
 table_query :
-    table_name
-    | table_name ( K_JOIN table_name )+ K_ON multiple_condition ;
+    ( table_name | table_name ( K_JOIN table_name )+ K_ON multiple_condition ) ( K_AS table_name )?;
 
 auth_level :
     K_SELECT | K_INSERT | K_UPDATE | K_DELETE | K_DROP ;

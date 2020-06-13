@@ -218,12 +218,12 @@ public class Manager {
         return database.select(queryTables, columnNames, where, distinct);
     }
 
-    public QueryTable getSingleTable(String tableName) {
+    public QueryTable getSingleTable(String tableName, String alias) {
         Database database = getDatabase(context.databaseName);
         try {
             database.lock.readLock().lock();
             if (database.tables.containsKey(tableName)) {
-                return new SingleTable(database.tables.get(tableName));
+                return new SingleTable(database.tables.get(tableName), alias);
             }
         } finally {
             database.lock.readLock().unlock();
@@ -231,7 +231,7 @@ public class Manager {
         throw new RelationNotExist(tableName);
     }
 
-    public QueryTable getJointTable(List<String> tableNames, Where join) {
+    public QueryTable getJointTable(List<String> tableNames, Where join, String alias) {
         Database database = getDatabase(context.databaseName);
         try {
             database.lock.readLock().lock();
@@ -243,7 +243,7 @@ public class Manager {
             List<Table> tables = tableNames.stream()
                     .map(name -> database.tables.get(name))
                     .collect(Collectors.toList());
-            return new JointTable(tables, join);
+            return new JointTable(tables, join, alias);
         } finally {
             database.lock.readLock().unlock();
         }

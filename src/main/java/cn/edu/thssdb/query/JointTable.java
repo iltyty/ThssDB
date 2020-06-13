@@ -17,13 +17,15 @@ public class JointTable extends QueryTable implements Iterator<Row> {
     private LinkedList<Row> rows;
     private Predicate<Row> join;
     private ArrayList<MetaInfo> metaInfos;
+    private String alias;
 
-    public JointTable(List<Table> tables, Where join) {
+    public JointTable(List<Table> tables, Where join, String alias) {
         super();
         this.tables = tables;
         this.iterators = new ArrayList<>();
         this.rows = new LinkedList<>();
         this.columns = new ArrayList<>();
+        this.alias = alias;
         for (Table t : tables) {
             this.columns.addAll(t.columns);
             this.iterators.add(t.iterator());
@@ -91,6 +93,12 @@ public class JointTable extends QueryTable implements Iterator<Row> {
 
     @Override
     public ArrayList<MetaInfo> genMetaInfo() {
-        return metaInfos;
+        if (alias == null) {
+            return metaInfos;
+        } else {
+            return tables.stream()
+                    .map(table -> new MetaInfo(alias, table.columns))
+                    .collect(Collectors.toCollection(ArrayList::new));
+        }
     }
 }
