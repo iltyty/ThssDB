@@ -9,6 +9,7 @@ import cn.edu.thssdb.transaction.LockManager;
 import cn.edu.thssdb.utils.Context;
 import cn.edu.thssdb.utils.Global;
 
+import javax.xml.crypto.Data;
 import java.io.*;
 import java.nio.file.Files;
 import java.nio.file.OpenOption;
@@ -172,6 +173,13 @@ public class Manager {
             db.lock.readLock().unlock();
         }
         return String.format("Tabels in %s: %s", name, sj.toString());
+    }
+
+    public String showMetaInfo(String tableName) {
+        Database db = getDatabase(context.databaseName);
+        Table table = db.getTable(tableName);
+        String columnNames = table.columns.stream().map(Column::getName).collect(Collectors.joining(" "));
+        return String.format("Columns in %s: %s", tableName, columnNames);
     }
 
     public void insert(String tableName, String[] values, String[] columnNames) {

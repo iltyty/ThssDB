@@ -44,8 +44,13 @@ public class SQLCustomVisitor extends SQLBaseVisitor {
             String msg = visitUse_db_stmt(ctx.use_db_stmt());
             result.setMessage(msg);
         } else if (ctx.show_table_stmt() != null) {
+            String msg = visitShow_table_stmt(ctx.show_table_stmt());
+            result.setMessage(msg);
         } else if (ctx.show_db_stmt() != null) {
             String msg = visitShow_db_stmt(ctx.show_db_stmt());
+            result.setMessage(msg);
+        } else if (ctx.show_meta_stmt() != null) {
+            String msg = visitShow_meta_stmt(ctx.show_meta_stmt());
             result.setMessage(msg);
         } else if (ctx.create_table_stmt() != null) {
             String msg = visitCreate_table_stmt(ctx.create_table_stmt());
@@ -99,6 +104,11 @@ public class SQLCustomVisitor extends SQLBaseVisitor {
     @Override
     public String visitShow_db_stmt(SQLParser.Show_db_stmtContext ctx) {
         return manager.showDatabases();
+    }
+
+    @Override
+    public String visitShow_meta_stmt(SQLParser.Show_meta_stmtContext ctx) {
+        return manager.showMetaInfo(ctx.table_name().getText().toLowerCase());
     }
 
     private boolean equals(String columnName1, String columnName2) {
