@@ -93,6 +93,10 @@ public class Manager {
                 throw new KeyNotExistException();
             }
             db.dropAll();
+            File dir = new File("./" + name);
+            if (dir.exists()) {
+                dir.delete();
+            }
             databases.remove(name);
             syncMetafile();
         } finally {
