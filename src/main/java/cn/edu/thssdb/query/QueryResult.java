@@ -127,11 +127,27 @@ public class QueryResult {
 
     public List<String> columnsToString() {
         if (wildcard) {
-            return metaInfos.stream()
-                    .flatMap(metaInfo -> metaInfo.columns
-                            .stream()
-                            .map(column -> metaInfo.tableName + "." + column.getName()))
-                    .collect(Collectors.toList());
+            String tableName = null;
+            boolean single = true;
+            for (MetaInfo metaInfo : metaInfos) {
+                if (tableName == null) {
+                    tableName = metaInfo.tableName;
+                } else if (!tableName.equals(metaInfo.tableName)) {
+                    single = false;
+                    break;
+                }
+            }
+            if (metaInfos.size() == 1 && single) {
+                return metaInfos.stream()
+                        .flatMap(metaInfo -> metaInfo.columns.stream().map(Column::getName))
+                        .collect(Collectors.toList());
+            } else {
+                return metaInfos.stream()
+                        .flatMap(metaInfo -> metaInfo.columns
+                                .stream()
+                                .map(column -> metaInfo.tableName + "." + column.getName()))
+                        .collect(Collectors.toList());
+            }
         } else {
             return Arrays.asList(columnNames);
         }
