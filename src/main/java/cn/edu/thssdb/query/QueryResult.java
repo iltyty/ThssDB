@@ -133,10 +133,7 @@ public class QueryResult {
                             .map(column -> metaInfo.tableName + "." + column.getName()))
                     .collect(Collectors.toList());
         } else {
-            return metaInfos.stream()
-                    .flatMap(metaInfo -> metaInfo.columns
-                    .stream()
-                    .map(Column::getName)).collect(Collectors.toList());
+            return Arrays.asList(columnNames);
         }
     }
 
