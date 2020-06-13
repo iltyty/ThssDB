@@ -8,7 +8,6 @@ import cn.edu.thssdb.query.*;
 import cn.edu.thssdb.transaction.LockManager;
 import cn.edu.thssdb.utils.Context;
 import cn.edu.thssdb.utils.Global;
-import com.sun.xml.internal.ws.policy.privateutil.PolicyUtils;
 
 import java.io.*;
 import java.nio.file.Files;

@@ -126,7 +126,7 @@ public class QueryResult {
     }
 
     public List<String> columnsToString() {
-        if (wildcard && metaInfos.size() != 1) {
+        if (wildcard) {
             return metaInfos.stream()
                     .flatMap(metaInfo -> metaInfo.columns
                             .stream()
