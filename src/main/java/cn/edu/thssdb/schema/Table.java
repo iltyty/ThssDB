@@ -159,12 +159,12 @@ public class Table implements Iterable<Row> {
             Row row = new Row(entries, currentPage);
             Page page = pages.get(currentPage);
             assert page != null;
+            index.put(primaryEntry, row);
             page.insert(primaryEntry, row.toString().length());
             page.dirty = true;
             if (page.size > Global.PAGE_SIZE) {
                 getNewPage();
             }
-            index.put(primaryEntry, row);
 
             if (context.autoCommit) {
                 commit();
