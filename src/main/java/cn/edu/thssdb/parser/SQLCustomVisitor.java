@@ -374,7 +374,9 @@ public class SQLCustomVisitor extends SQLBaseVisitor {
                 .stream()
                 .map(sCtx -> sCtx.getText().toLowerCase())
                 .collect(Collectors.toList());
-        tableNames.remove(tableNames.size() - 1);
+        if (ctx.K_AS() != null) {
+            tableNames.remove(tableNames.size() - 1);
+        }
         return manager.getJointTable(tableNames, join, alias);
     }
 
