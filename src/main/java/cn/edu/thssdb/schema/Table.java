@@ -88,9 +88,9 @@ public class Table implements Iterable<Row> {
                     if (i == primaryIndex) {
                         try {
                             index.put(entries.get(i), row);
+                            page.entries.add(entries.get(i));
                         } catch (DuplicateKeyException ignored) {
                         }
-                        page.entries.add(entries.get(i));
                         break;
                     }
                 }
