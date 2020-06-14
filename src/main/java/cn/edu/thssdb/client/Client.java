@@ -43,7 +43,7 @@ public class Client {
     private static TProtocol protocol;
     private static IService.Client client;
     private static CommandLine commandLine;
-    private static long sessionId;
+    private static Long sessionId = null;
 
     public static void main(String[] args) {
         commandLine = parseCmd(args);
@@ -74,8 +74,15 @@ public class Client {
                     case Global.CONNECT:
                         connect();
                         break;
+                    case Global.DISCONNECT:
+                        disconnect();
+                        break;
                     default:
-                        execute(msg.trim());
+                        if (sessionId == null) {
+                            println("Not connected");
+                        } else {
+                            execute(msg.trim());
+                        }
                         break;
                 }
                 long endTime = System.currentTimeMillis();
@@ -104,6 +111,18 @@ public class Client {
         try {
             ConnectResp resp = client.connect(req);
             sessionId = resp.sessionId;
+            println("Connected to database");
+        } catch (TException e) {
+            logger.error(e.getMessage());
+        }
+    }
+
+    private static void disconnect() {
+        DisconnectReq req = new DisconnectReq(sessionId);
+        try {
+            DisconnectResp resp = client.disconnect(req);
+            sessionId = null;
+            println("Disconnected from database");
         } catch (TException e) {
             logger.error(e.getMessage());
         }

@@ -19,6 +19,7 @@ public class Global {
   public static final String SHOW_TIME = "show time;";
   public static final String QUIT = "quit;";
   public static final String CONNECT = "connect;";
+  public static final String DISCONNECT = "disconnect;";
 
   public static final String S_URL_INTERNAL = "jdbc:default:connection";
 
